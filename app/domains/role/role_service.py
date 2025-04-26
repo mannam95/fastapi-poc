@@ -10,7 +10,7 @@ from sqlalchemy.orm import joinedload
 from app.domains.role.role_schemas import RoleCreate, RoleUpdate, RoleProcessAssociation
 from app.domains.role.role_model import Role
 from app.domains.process.process_model import Process
-from app.domains.role.role_model import RoleProcess
+from app.domains.role.role_model import Role
 
 
 class RoleService:
@@ -77,7 +77,7 @@ class RoleService:
         await self.session.delete(role)
         await self.session.commit()
 
-    async def add_process_to_role(self, association: RoleProcessAssociation) -> RoleProcess:
+    async def add_process_to_role(self, association: RoleProcessAssociation) -> Role:
         """Add a process to a role"""
         role = await self.session.get(Role, association.role_id)
         if not role:
@@ -92,13 +92,13 @@ class RoleService:
 
     async def remove_process_from_role(self, role_id: int, process_id: int) -> None:
         """Remove a process from a role"""
-        query = select(RoleProcess).where(
-            RoleProcess.role_id == role_id,
-            RoleProcess.process_id == process_id
-        )
-        result = await self.session.execute(query)
-        association = result.scalars().first()
-        if not association:
-            raise HTTPException(status_code=404, detail=f"Process {process_id} is not associated with role {role_id}")
-        await self.session.delete(association)
+        role = await self.session.get(Role, role_id)
+        if not role:
+            raise HTTPException(status_code=404, detail=f"Role with ID {role_id} not found")
+        process = await self.session.get(Process, process_id)
+        if not process:
+            raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
+        role.processes.remove(process)
         await self.session.commit()
+        await self.session.refresh(role, ['processes'])
+        return role
