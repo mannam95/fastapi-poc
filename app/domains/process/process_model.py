@@ -19,3 +19,4 @@ class Process(Base):
     
     # Many-to-many relationships
     departments = relationship("Department", secondary="department_process", back_populates="processes")
+    locations = relationship("Location", secondary="location_process", back_populates="processes")

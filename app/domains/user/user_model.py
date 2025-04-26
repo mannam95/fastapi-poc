@@ -14,3 +14,4 @@ class User(Base):
     # Relationships for created entities
     created_processes = relationship("Process", back_populates="created_by")
     created_departments = relationship("Department", back_populates="created_by")
+    created_locations = relationship("Location", back_populates="created_by")

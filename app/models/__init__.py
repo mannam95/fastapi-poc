@@ -5,9 +5,10 @@
 from app.domains.process.process_model import Process
 from app.domains.user.user_model import User
 from app.domains.department.department_model import Department
-
+from app.domains.location.location_model import Location
 __all__ = [
     "Process", 
     "User", 
-    "Department"
+    "Department",
+    "Location"
 ]
