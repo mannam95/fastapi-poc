@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Process Management API"
+    ENV: str = "development"
     
     # CORS
     CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = ["http://localhost:8000", "http://localhost:3000"]
@@ -29,12 +30,12 @@ class Settings(BaseSettings):
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
         return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
+            scheme="postgresql", #postgresql+asyncpg
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
-            port=int(self.POSTGRES_PORT),  # Convert to int here
-            path=f"/{self.POSTGRES_DB}"
+            port=int(self.POSTGRES_PORT),
+            path=f"{self.POSTGRES_DB}"
         )
 
     @field_validator("DATABASE_URI", mode="before")
@@ -42,12 +43,12 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return v
         return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
+            scheme="postgresql",
             username=values.data.get("POSTGRES_USER"),
             password=values.data.get("POSTGRES_PASSWORD"),
             host=values.data.get("POSTGRES_SERVER"),
             port=values.data.get("POSTGRES_PORT"),
-            path=f"{values.data.get('POSTGRES_DB') or ''}",
+            path=f"{values.data.get('POSTGRES_DB') or ''}"
         )
 
 

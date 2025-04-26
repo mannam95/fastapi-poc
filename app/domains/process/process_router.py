@@ -1,58 +1,96 @@
-from typing import List, Optional
-from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
+from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import select
 
-from app.core.database import get_db
-from app.domains.process.process_schemas import Process, ProcessCreate, ProcessDetail, ProcessUpdate
-from app.domains.process.process_service import create_process, get_process, get_processes, update_process
+from app.core.database import SessionDep
+from app.domains.process.process_model import Process
+from app.domains.process.process_schemas import ProcessCreate, ProcessRead, ProcessUpdate
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Process])
+@router.post("/create-process", response_model=ProcessRead, status_code=status.HTTP_201_CREATED)
+async def create_new_process(
+    session: SessionDep,
+    process_in: ProcessCreate
+):
+    """Create a new process"""
+    try:
+        # Create new Process instance from input data
+        db_process = Process(
+            title=process_in.title,
+            description=process_in.description
+        )
+        
+        # Add the process to the database to get an ID
+        session.add(db_process)    
+        session.commit()
+        session.refresh(db_process)
+        return db_process
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/read-processes", response_model=List[ProcessRead])
 async def read_processes(
-    skip: int = 0, 
+    session: SessionDep,
+    offset: int = 0, 
     limit: int = 100,
-    db: AsyncSession = Depends(get_db)
 ):
     """Get list of processes"""
-    processes = await get_processes(db, skip=skip, limit=limit)
+    processes = session.execute(
+        select(Process)
+        .offset(offset)
+        .limit(limit)
+    ).scalars().all()
     return processes
 
 
-@router.get("/{process_id}", response_model=ProcessDetail)
+@router.get("/read-process/{process_id}", response_model=ProcessRead)
 async def read_process(
-    process_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    process_id: int,
+    session: SessionDep,
 ):
-    """Get detailed information about a single process"""
-    process = await get_process(db, process_id=process_id)
-    if process is None:
+    """Get a single process by ID with all relationships loaded"""
+    process = session.get(Process, process_id)
+    if not process:
         raise HTTPException(status_code=404, detail="Process not found")
     return process
 
 
-@router.post("/", response_model=Process, status_code=status.HTTP_201_CREATED)
-async def create_new_process(
-    process_in: ProcessCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    """Create a new process"""
-    process = await create_process(db=db, process_in=process_in)
-    return process
-
-
-@router.put("/{process_id}", response_model=Process)
-async def update_existing_process(
-    process_id: UUID,
+@router.put("/update-process/{process_id}", response_model=ProcessRead)
+async def update_process(
+    session: SessionDep,
+    process_id: int,
     process_in: ProcessUpdate,
-    db: AsyncSession = Depends(get_db)
 ):
     """Update an existing process"""
-    process = await get_process(db, process_id=process_id)
-    if process is None:
+    process = session.get(Process, process_id)
+    if not process:
         raise HTTPException(status_code=404, detail="Process not found")
+    try:
+        update_data = process_in.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            if value is not None:  # Only update if the value is not None
+                setattr(process, key, value)
+        session.commit()
+        session.refresh(process)
+        return process
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/delete-process/{process_id}", response_model=ProcessRead)
+async def delete_process(
+    session: SessionDep,
+    process_id: int,
+):
+    """Delete a process"""
+    process = session.get(Process, process_id)
+    if not process:
+        raise HTTPException(status_code=404, detail="Process not found")
+    try:
+        session.delete(process)
+        session.commit()
+        return process
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
-    updated_process = await update_process(db=db, process=process, process_in=process_in)
-    return updated_process 

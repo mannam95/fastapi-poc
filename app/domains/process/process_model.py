@@ -1,8 +1,16 @@
-from sqlalchemy import Column, String, Text
-from app.models.base import BaseModel
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+from app.core.database import Base
 
-
-class Process(BaseModel):
+class Process(Base):
     """Process model"""
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
+    
+    __tablename__ = "process"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    
+    # Pydantic models for API responses
+    class Config:
+        from_attributes = True
