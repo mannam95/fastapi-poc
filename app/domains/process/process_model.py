@@ -21,3 +21,4 @@ class Process(Base):
     departments = relationship("Department", secondary="department_process", back_populates="processes")
     locations = relationship("Location", secondary="location_process", back_populates="processes")
     resources = relationship("Resource", secondary="resource_process", back_populates="processes")
+    roles = relationship("Role", secondary="role_process", back_populates="processes")

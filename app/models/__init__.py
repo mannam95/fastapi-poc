@@ -7,11 +7,13 @@ from app.domains.user.user_model import User
 from app.domains.department.department_model import Department
 from app.domains.location.location_model import Location
 from app.domains.resource.resource_model import Resource
+from app.domains.role.role_model import Role
 
 __all__ = [
     "Process", 
     "User", 
     "Department",
     "Location",
-    "Resource"
+    "Resource",
+    "Role"
 ]

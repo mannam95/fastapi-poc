@@ -16,3 +16,4 @@ class User(Base):
     created_departments = relationship("Department", back_populates="created_by")
     created_locations = relationship("Location", back_populates="created_by")
     created_resources = relationship("Resource", back_populates="created_by")
+    created_roles = relationship("Role", back_populates="created_by")
