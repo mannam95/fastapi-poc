@@ -5,21 +5,34 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.database import create_db_and_tables
+from app.core.database import create_db_and_tables, sessionmanager
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Function that handles startup and shutdown events.
+    To understand more, read https://fastapi.tiangolo.com/advanced/events/
+    """
+    # Initialize the database connection
+    db_url = settings.SQLALCHEMY_DATABASE_URI
+    sessionmanager.init(db_url)
+    
+    # Create database tables
+    await create_db_and_tables()
+    
+    yield
+    
+    if sessionmanager._engine is not None:
+        # Close the DB connection
+        await sessionmanager.close()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="FastAPI Proof of Concept",
     version="0.1.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
-
-@app.on_event("startup")
-async def on_startup():
-    # Startup
-    if settings.ENV == "development":
-        create_db_and_tables()
 
 # Set CORS middleware
 app.add_middleware(

@@ -28,22 +28,24 @@ class Settings(BaseSettings):
         return int(v)
 
     @property
-    def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
-        return PostgresDsn.build(
-            scheme="postgresql", #postgresql+asyncpg
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        """Return the database URL as a string for SQLAlchemy"""
+        db_uri = PostgresDsn.build(
+            scheme="postgresql+asyncpg",  # Using asyncpg driver for async SQLAlchemy
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
             port=int(self.POSTGRES_PORT),
             path=f"{self.POSTGRES_DB}"
         )
+        return str(db_uri)
 
     @field_validator("DATABASE_URI", mode="before")
     def assemble_db_connection(cls, v: Union[str, None], values) -> Union[str, None]:
         if isinstance(v, str):
             return v
         return PostgresDsn.build(
-            scheme="postgresql",
+            scheme="postgresql+asyncpg",  # Using asyncpg driver for async SQLAlchemy
             username=values.data.get("POSTGRES_USER"),
             password=values.data.get("POSTGRES_PASSWORD"),
             host=values.data.get("POSTGRES_SERVER"),
