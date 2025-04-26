@@ -22,8 +22,8 @@ RUN pip install --upgrade pip && \
 COPY . .
 
 # Create a non-root user and switch to it
-RUN adduser --disabled-password --gecos '' appuser
-USER appuser
+# RUN adduser --disabled-password --gecos '' appuser
+# USER appuser
 
 # Command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

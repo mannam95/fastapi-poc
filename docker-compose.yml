@@ -1,5 +1,6 @@
 services:
   api:
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,9 +9,9 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - db
+      - postgres
     environment:
-      - POSTGRES_SERVER=db
+      - POSTGRES_SERVER=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=process_management
@@ -18,21 +19,21 @@ services:
     networks:
       - app-network
 
-  db:
+  postgres:
     image: postgres:15
+    restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=process_management
     ports:
       - "5432:5432"
+    expose:
+      - "5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-data:/var/lib/postgresql/data:cached
     networks:
       - app-network
 
 networks:
   app-network:
-
-volumes:
-  postgres_data: 
