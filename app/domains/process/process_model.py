@@ -16,3 +16,6 @@ class Process(Base):
     
     # Relationship to User
     created_by = relationship("User", back_populates="created_processes")
+    
+    # Many-to-many relationships
+    departments = relationship("Department", secondary="department_process", back_populates="processes")
