@@ -7,7 +7,7 @@ from app.domains.process.process_dependencies import ProcessServiceDep
 router = APIRouter()
 
 
-@router.post("/create-process", response_model=ProcessRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ProcessRead, status_code=status.HTTP_201_CREATED)
 async def create_new_process(
     service: ProcessServiceDep,
     process_in: ProcessCreate
@@ -16,7 +16,7 @@ async def create_new_process(
     return await service.create_process(process_in)
 
 
-@router.get("/read-processes", response_model=List[ProcessRead])
+@router.get("/", response_model=List[ProcessRead])
 async def read_processes(
     service: ProcessServiceDep,
     offset: int = 0, 
@@ -26,7 +26,7 @@ async def read_processes(
     return await service.get_processes(offset, limit)
 
 
-@router.get("/read-process/{process_id}", response_model=ProcessRead)
+@router.get("/{process_id}", response_model=ProcessRead)
 async def read_process(
     process_id: int,
     service: ProcessServiceDep,
@@ -35,7 +35,7 @@ async def read_process(
     return await service.get_process_by_id(process_id)
 
 
-@router.put("/update-process/{process_id}", response_model=ProcessRead)
+@router.put("/{process_id}", response_model=ProcessRead)
 async def update_process(
     process_id: int,
     process_in: ProcessUpdate,
@@ -45,7 +45,7 @@ async def update_process(
     return await service.update_process(process_id, process_in)
 
 
-@router.delete("/delete-process/{process_id}", response_model=ProcessRead)
+@router.delete("/{process_id}", response_model=ProcessRead)
 async def delete_process(
     process_id: int,
     service: ProcessServiceDep,

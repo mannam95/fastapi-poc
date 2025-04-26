@@ -1,5 +1,5 @@
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class Process(Base):
@@ -7,10 +7,12 @@ class Process(Base):
     
     __tablename__ = "process"
     
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    title: Mapped[str] = mapped_column(String, nullable=False)
-    description: Mapped[str] = mapped_column(String, nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+
+    # Foreign key to User who created this process
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
-    # Pydantic models for API responses
-    class Config:
-        from_attributes = True
+    # Relationship to User
+    created_by = relationship("User", back_populates="created_processes")

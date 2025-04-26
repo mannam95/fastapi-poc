@@ -1,13 +1,14 @@
 # app/domains/process/process_service.py
 # This file contains the business logic for the process domain
 
-from typing import List, Optional
+from typing import List
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.domains.process.process_model import Process
-from app.domains.process.process_schemas import ProcessCreate, ProcessRead, ProcessUpdate
+from app.domains.process.process_schemas import ProcessCreate, ProcessUpdate
 
 
 class ProcessService:
@@ -27,7 +28,8 @@ class ProcessService:
             # Create new Process instance from input data
             db_process = Process(
                 title=process_data.title,
-                description=process_data.description
+                description=process_data.description,
+                created_by_id=process_data.created_by_id
             )
             
             # Add the process to the database to get an ID
@@ -40,9 +42,10 @@ class ProcessService:
             raise HTTPException(status_code=500, detail=str(e))
 
     async def get_processes(self, offset: int = 0, limit: int = 100) -> List[Process]:
-        """Get a list of processes with pagination"""
+        """Get a list of processes with pagination and associated user data"""
         result = await self.session.execute(
             select(Process)
+            .options(selectinload(Process.created_by))
             .offset(offset)
             .limit(limit)
         )
@@ -50,8 +53,13 @@ class ProcessService:
         return processes
 
     async def get_process_by_id(self, process_id: int) -> Process:
-        """Get a single process by ID"""
-        process = await self.session.get(Process, process_id)
+        """Get a single process by ID with associated user data"""
+        result = await self.session.execute(
+            select(Process)
+            .options(selectinload(Process.created_by))
+            .where(Process.id == process_id)
+        )
+        process = result.scalars().first()
         if not process:
             raise HTTPException(status_code=404, detail="Process not found")
         return process
