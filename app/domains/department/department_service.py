@@ -2,6 +2,7 @@
 # This file contains the business logic for the department domain
 
 from typing import List, Optional
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +19,7 @@ class DepartmentService(BaseService):
 
     def __init__(self, session: AsyncSession):
         """Initialize the service with a database session
-        
+
         Args:
             session: SQLAlchemy async session for database operations
         """
@@ -29,13 +30,12 @@ class DepartmentService(BaseService):
         try:
             # Create new Department instance from input data
             db_department = Department(
-                title=department_data.title,
-                created_by_id=department_data.created_by_id
+                title=department_data.title, created_by_id=department_data.created_by_id
             )
-            
+
             # Add the department to the database to get an ID
-            self.session.add(db_department)    
-            
+            self.session.add(db_department)
+
             # Handle relationships
             await self._update_relationships(db_department, department_data.process_ids)
 
@@ -56,10 +56,7 @@ class DepartmentService(BaseService):
         # Get the departments with associated data
         result = await self.session.execute(
             select(Department)
-            .options(
-                selectinload(Department.created_by),
-                selectinload(Department.processes)
-            )
+            .options(selectinload(Department.created_by), selectinload(Department.processes))
             .offset(offset)
             .limit(limit)
         )
@@ -75,10 +72,7 @@ class DepartmentService(BaseService):
         # Get the department by ID with associated data
         result = await self.session.execute(
             select(Department)
-            .options(
-                selectinload(Department.created_by),
-                selectinload(Department.processes)
-            )
+            .options(selectinload(Department.created_by), selectinload(Department.processes))
             .where(Department.id == department_id)
         )
 
@@ -90,7 +84,9 @@ class DepartmentService(BaseService):
         # return the department
         return department
 
-    async def update_department(self, department_id: int, department_data: DepartmentUpdate) -> Department:
+    async def update_department(
+        self, department_id: int, department_data: DepartmentUpdate
+    ) -> Department:
         """Update an existing department"""
         # Get the department by ID
         department = await self.session.get(Department, department_id)
@@ -102,10 +98,10 @@ class DepartmentService(BaseService):
             for key, value in update_data.items():
                 if value is not None:  # Only update if the value is not None
                     setattr(department, key, value)
-            
+
             # Handle relationships
             await self._update_relationships(department, department_data.process_ids)
-                
+
             # Finally commit all
             await self.session.commit()
 
@@ -127,7 +123,7 @@ class DepartmentService(BaseService):
         try:
             # Clear all relationships
             department.processes = []
-            
+
             # Now delete the department
             await self.session.delete(department)
 
@@ -138,24 +134,18 @@ class DepartmentService(BaseService):
             raise HTTPException(status_code=500, detail=str(e))
 
     async def _update_relationships(
-        self, 
-        department: Department, 
-        process_ids: Optional[List[int]] = None
+        self, department: Department, process_ids: Optional[List[int]] = None
     ) -> None:
         """Update the many-to-many relationships of a department
-        
+
         This method handles adding and removing related entities based on the provided IDs.
-        
+
         Args:
             department: The department to update
             process_ids: List of process IDs to associate with the department
         """
         if process_ids is not None:
-            await self.update_many_to_many_relationship(
-                department.processes, 
-                Process, 
-                process_ids
-            )
+            await self.update_many_to_many_relationship(department.processes, Process, process_ids)
 
         await self.session.commit()
         await self.session.refresh(department)

@@ -2,6 +2,7 @@
 # This file contains the business logic for the location domain
 
 from typing import List
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +19,7 @@ class LocationService(BaseService):
 
     def __init__(self, session: AsyncSession):
         """Initialize the service with a database session
-        
+
         Args:
             session: SQLAlchemy async session for database operations
         """
@@ -29,13 +30,12 @@ class LocationService(BaseService):
         try:
             # Create new Location instance from input data
             db_location = Location(
-                title=location_data.title,
-                created_by_id=location_data.created_by_id
+                title=location_data.title, created_by_id=location_data.created_by_id
             )
-            
+
             # Add the location to the database to get an ID
-            self.session.add(db_location)    
-            
+            self.session.add(db_location)
+
             # Handle processes if provided
             await self._update_relationships(db_location, location_data.process_ids)
 
@@ -56,10 +56,7 @@ class LocationService(BaseService):
         # Get the locations with associated data
         result = await self.session.execute(
             select(Location)
-            .options(
-                selectinload(Location.created_by),
-                selectinload(Location.processes)
-            )
+            .options(selectinload(Location.created_by), selectinload(Location.processes))
             .offset(offset)
             .limit(limit)
         )
@@ -75,10 +72,7 @@ class LocationService(BaseService):
         # Get the location by ID with associated data
         result = await self.session.execute(
             select(Location)
-            .options(
-                selectinload(Location.created_by),
-                selectinload(Location.processes)
-            )
+            .options(selectinload(Location.created_by), selectinload(Location.processes))
             .where(Location.id == location_id)
         )
 
@@ -102,10 +96,10 @@ class LocationService(BaseService):
             for key, value in update_data.items():
                 if value is not None:  # Only update if the value is not None
                     setattr(location, key, value)
-            
+
             # Handle relationships
             await self._update_relationships(location, location_data.process_ids)
-                
+
             # Finally commit all
             await self.session.commit()
 
@@ -127,7 +121,7 @@ class LocationService(BaseService):
         try:
             # Clear all relationships
             location.processes = []
-            
+
             # Now delete the location
             await self.session.delete(location)
 
@@ -136,22 +130,18 @@ class LocationService(BaseService):
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
-            
+
     async def _update_relationships(self, location: Location, process_ids: List[int]) -> None:
         """Update the many-to-many relationships of a location
-        
+
         This method handles adding and removing related entities based on the provided IDs.
-        
+
         Args:
             location: The location to update
             process_ids: List of process IDs to associate with the location
         """
         if process_ids is not None:
-            await self.update_many_to_many_relationship(
-                location.processes, 
-                Process, 
-                process_ids
-            )
-            
+            await self.update_many_to_many_relationship(location.processes, Process, process_ids)
+
         await self.session.commit()
         await self.session.refresh(location)

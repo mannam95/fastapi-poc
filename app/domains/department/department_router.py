@@ -1,22 +1,21 @@
 from typing import List
+
 from fastapi import APIRouter, status
 
-from app.domains.department.department_schemas import (
-    DepartmentCreate, 
-    DepartmentRead, 
-    DepartmentUpdate
-)
 from app.domains.department.department_dependencies import DepartmentServiceDep
+from app.domains.department.department_schemas import (
+    DepartmentCreate,
+    DepartmentRead,
+    DepartmentUpdate,
+)
 
 router = APIRouter()
 
 # CRUD operations
 
+
 @router.post("/", response_model=DepartmentRead, status_code=status.HTTP_201_CREATED)
-async def create_department(
-    service: DepartmentServiceDep,
-    department_in: DepartmentCreate
-):
+async def create_department(service: DepartmentServiceDep, department_in: DepartmentCreate):
     """Create a new department"""
     return await service.create_department(department_in)
 
@@ -24,7 +23,7 @@ async def create_department(
 @router.get("/", response_model=List[DepartmentRead])
 async def read_departments(
     service: DepartmentServiceDep,
-    offset: int = 0, 
+    offset: int = 0,
     limit: int = 100,
 ):
     """Get list of departments"""

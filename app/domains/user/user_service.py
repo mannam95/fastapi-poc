@@ -1,8 +1,9 @@
 # app/domains/user/user_service.py
 # This file contains the business logic for the user domain
 
-from typing import List
 from datetime import datetime
+from typing import List
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +17,7 @@ class UserService:
 
     def __init__(self, session: AsyncSession):
         """Initialize the service with a database session
-        
+
         Args:
             session: SQLAlchemy async session for database operations
         """
@@ -26,20 +27,17 @@ class UserService:
         """Create a new user"""
         try:
             # Create new User instance from input data
-            db_user = User(
-                title=user_data.title,
-                created_at=datetime.now()
-            )
-            
+            db_user = User(title=user_data.title, created_at=datetime.now())
+
             # Add the user to the database to get an ID
             self.session.add(db_user)
-    
+
             # Commit all
             await self.session.commit()
-            
+
             # Refresh the user to get the latest data
             await self.session.refresh(db_user)
-            
+
             # Return the user
             return db_user
         except Exception as e:
@@ -49,11 +47,7 @@ class UserService:
     async def get_users(self, skip: int = 0, limit: int = 100) -> List[User]:
         """Get a list of users with pagination"""
         # Get the users with pagination
-        result = await self.session.execute(
-            select(User)
-            .offset(skip)
-            .limit(limit)
-        )
+        result = await self.session.execute(select(User).offset(skip).limit(limit))
 
         # Convert the result to a list of users
         users = result.scalars().all()
@@ -80,12 +74,12 @@ class UserService:
         try:
             # Get the update data
             update_data = user_data.model_dump(exclude_unset=True)
-            
+
             # Apply updates
             for key, value in update_data.items():
                 if value is not None:  # Only update if the value is not None
                     setattr(user, key, value)
-            
+
             # Commit all
             await self.session.commit()
 
@@ -112,4 +106,4 @@ class UserService:
             await self.session.commit()
         except Exception as e:
             await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e)) 
+            raise HTTPException(status_code=500, detail=str(e))

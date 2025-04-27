@@ -1,17 +1,15 @@
 from typing import List
+
 from fastapi import APIRouter, status
 
-from app.domains.user.user_schemas import UserCreate, UserRead, UserUpdate
 from app.domains.user.user_dependencies import UserServiceDep
+from app.domains.user.user_schemas import UserCreate, UserRead, UserUpdate
 
 router = APIRouter()
 
 
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def create_user(
-    service: UserServiceDep,
-    user_in: UserCreate
-):
+async def create_user(service: UserServiceDep, user_in: UserCreate):
     """Create a new user"""
     return await service.create_user(user_in)
 
@@ -19,7 +17,7 @@ async def create_user(
 @router.get("/", response_model=List[UserRead])
 async def read_users(
     service: UserServiceDep,
-    skip: int = 0, 
+    skip: int = 0,
     limit: int = 100,
 ):
     """Get list of users"""

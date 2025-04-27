@@ -1,22 +1,21 @@
 from typing import List
+
 from fastapi import APIRouter, status
 
-from app.domains.location.location_schemas import (
-    LocationCreate, 
-    LocationRead, 
-    LocationUpdate
-)
 from app.domains.location.location_dependencies import LocationServiceDep
+from app.domains.location.location_schemas import (
+    LocationCreate,
+    LocationRead,
+    LocationUpdate,
+)
 
 router = APIRouter()
 
 # CRUD operations
 
+
 @router.post("/", response_model=LocationRead, status_code=status.HTTP_201_CREATED)
-async def create_location(
-    service: LocationServiceDep,
-    location_in: LocationCreate
-):
+async def create_location(service: LocationServiceDep, location_in: LocationCreate):
     """Create a new location"""
     return await service.create_location(location_in)
 
@@ -24,7 +23,7 @@ async def create_location(
 @router.get("/", response_model=List[LocationRead])
 async def read_locations(
     service: LocationServiceDep,
-    offset: int = 0, 
+    offset: int = 0,
     limit: int = 100,
 ):
     """Get list of locations"""

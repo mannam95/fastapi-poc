@@ -1,17 +1,19 @@
 from typing import List
+
 from fastapi import APIRouter, status
 
-from app.domains.process.process_schemas import ProcessCreate, ProcessResponse, ProcessUpdate
 from app.domains.process.process_dependencies import ProcessServiceDep
+from app.domains.process.process_schemas import (
+    ProcessCreate,
+    ProcessResponse,
+    ProcessUpdate,
+)
 
 router = APIRouter()
 
 
 @router.post("/", response_model=ProcessResponse, status_code=status.HTTP_201_CREATED)
-async def create_new_process(
-    service: ProcessServiceDep,
-    process_in: ProcessCreate
-):
+async def create_new_process(service: ProcessServiceDep, process_in: ProcessCreate):
     """Create a new process"""
     return await service.create_process(process_in)
 
@@ -19,7 +21,7 @@ async def create_new_process(
 @router.get("/", response_model=List[ProcessResponse])
 async def read_processes(
     service: ProcessServiceDep,
-    offset: int = 0, 
+    offset: int = 0,
     limit: int = 100,
 ):
     """Get list of processes"""
@@ -53,4 +55,3 @@ async def delete_process(
     """Delete a process and clear all of its relationships"""
     await service.delete_process(process_id)
     return {"message": "Process deleted successfully"}
-    

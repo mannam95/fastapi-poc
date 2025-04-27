@@ -2,14 +2,15 @@
 # This file contains the business logic for the resource domain
 
 from typing import List
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.domains.process.process_model import Process
 from app.domains.resource.resource_model import Resource
 from app.domains.resource.resource_schemas import ResourceCreate, ResourceUpdate
-from app.domains.process.process_model import Process
 from app.domains.shared.base_service import BaseService
 
 
@@ -18,7 +19,7 @@ class ResourceService(BaseService):
 
     def __init__(self, session: AsyncSession):
         """Initialize the service with a database session
-        
+
         Args:
             session: SQLAlchemy async session for database operations
         """
@@ -29,13 +30,12 @@ class ResourceService(BaseService):
         try:
             # Create new Resource instance from input data
             db_resource = Resource(
-                title=resource_data.title,
-                created_by_id=resource_data.created_by_id
+                title=resource_data.title, created_by_id=resource_data.created_by_id
             )
-            
+
             # Add the resource to the database to get an ID
-            self.session.add(db_resource)    
-            
+            self.session.add(db_resource)
+
             # Handle relationships
             await self._update_relationships(db_resource, resource_data.process_ids)
 
@@ -56,10 +56,7 @@ class ResourceService(BaseService):
         # Get the resources with associated data
         result = await self.session.execute(
             select(Resource)
-            .options(
-                selectinload(Resource.created_by),
-                selectinload(Resource.processes)
-            )
+            .options(selectinload(Resource.created_by), selectinload(Resource.processes))
             .offset(offset)
             .limit(limit)
         )
@@ -75,10 +72,7 @@ class ResourceService(BaseService):
         # Get the resource by ID with associated data
         result = await self.session.execute(
             select(Resource)
-            .options(
-                selectinload(Resource.created_by),
-                selectinload(Resource.processes)
-            )
+            .options(selectinload(Resource.created_by), selectinload(Resource.processes))
             .where(Resource.id == resource_id)
         )
 
@@ -102,10 +96,10 @@ class ResourceService(BaseService):
             for key, value in update_data.items():
                 if value is not None:  # Only update if the value is not None
                     setattr(resource, key, value)
-            
+
             # Handle relationships
             await self._update_relationships(resource, resource_data.process_ids)
-                
+
             # Finally commit all
             await self.session.commit()
 
@@ -127,7 +121,7 @@ class ResourceService(BaseService):
         try:
             # Clear all relationships
             resource.processes = []
-            
+
             # Now delete the resource
             await self.session.delete(resource)
 
@@ -136,22 +130,18 @@ class ResourceService(BaseService):
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
-            
+
     async def _update_relationships(self, resource: Resource, process_ids: List[int]) -> None:
         """Update the many-to-many relationships of a resource
-        
+
         This method handles adding and removing related entities based on the provided IDs.
-        
+
         Args:
             resource: The resource to update
             process_ids: List of process IDs to associate with the resource
         """
         if process_ids is not None:
-            await self.update_many_to_many_relationship(
-                resource.processes, 
-                Process, 
-                process_ids
-            )
-            
+            await self.update_many_to_many_relationship(resource.processes, Process, process_ids)
+
         await self.session.commit()
-        await self.session.refresh(resource) 
+        await self.session.refresh(resource)

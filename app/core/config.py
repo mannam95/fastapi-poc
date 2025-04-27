@@ -6,14 +6,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
-    
+
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Process Management API"
     ENV: str = "development"
-    
+
     # CORS
-    CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = ["http://localhost:8000", "http://localhost:3000"]
-    
+    CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = [
+        "http://localhost:8000",
+        "http://localhost:3000",
+    ]
+
     # PostgreSQL
     POSTGRES_SERVER: str
     POSTGRES_USER: str
@@ -36,7 +39,7 @@ class Settings(BaseSettings):
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
             port=int(self.POSTGRES_PORT),
-            path=f"{self.POSTGRES_DB}"
+            path=f"{self.POSTGRES_DB}",
         )
         return str(db_uri)
 
@@ -50,8 +53,8 @@ class Settings(BaseSettings):
             password=values.data.get("POSTGRES_PASSWORD"),
             host=values.data.get("POSTGRES_SERVER"),
             port=values.data.get("POSTGRES_PORT"),
-            path=f"{values.data.get('POSTGRES_DB') or ''}"
+            path=f"{values.data.get('POSTGRES_DB') or ''}",
         )
 
 
-settings = Settings() 
+settings = Settings()

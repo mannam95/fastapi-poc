@@ -2,14 +2,11 @@
 # This file contains the API routes for the role domain
 
 from typing import List
+
 from fastapi import APIRouter, Query, status
 
-from app.domains.role.role_schemas import (
-    RoleCreate, 
-    RoleUpdate, 
-    RoleRead
-)
 from app.domains.role.role_dependencies import RoleServiceDep
+from app.domains.role.role_schemas import RoleCreate, RoleRead, RoleUpdate
 
 router = APIRouter()
 
@@ -30,11 +27,7 @@ async def get_roles(
     limit: int = Query(100, ge=1, le=1000, description="Limit the number of items returned"),
 ):
     """Get a paginated list of roles"""
-    return await service.get_roles(
-        offset=offset, 
-        limit=limit
-    )
-
+    return await service.get_roles(offset=offset, limit=limit)
 
 
 @router.get("/{role_id}", response_model=RoleRead)

@@ -2,15 +2,16 @@
 # This file contains the business logic for the process domain
 
 from typing import List, Optional
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.domains.process.process_model import Process
-from app.domains.process.process_schemas import ProcessCreate, ProcessUpdate
 from app.domains.department.department_model import Department
 from app.domains.location.location_model import Location
+from app.domains.process.process_model import Process
+from app.domains.process.process_schemas import ProcessCreate, ProcessUpdate
 from app.domains.resource.resource_model import Resource
 from app.domains.role.role_model import Role
 from app.domains.shared.base_service import BaseService
@@ -21,7 +22,7 @@ class ProcessService(BaseService):
 
     def __init__(self, session: AsyncSession):
         """Initialize the service with a database session
-        
+
         Args:
             session: SQLAlchemy async session for database operations
         """
@@ -34,7 +35,7 @@ class ProcessService(BaseService):
             db_process = Process(
                 title=process_data.title,
                 description=process_data.description,
-                created_by_id=process_data.created_by_id
+                created_by_id=process_data.created_by_id,
             )
 
             # Add the process to the database to get an ID
@@ -46,7 +47,7 @@ class ProcessService(BaseService):
                 department_ids=process_data.department_ids,
                 location_ids=process_data.location_ids,
                 resource_ids=process_data.resource_ids,
-                role_ids=process_data.role_ids
+                role_ids=process_data.role_ids,
             )
 
             # Finally commit all
@@ -57,7 +58,7 @@ class ProcessService(BaseService):
 
             # return the process
             return db_process
-        
+
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
@@ -72,7 +73,7 @@ class ProcessService(BaseService):
                 selectinload(Process.departments),
                 selectinload(Process.locations),
                 selectinload(Process.resources),
-                selectinload(Process.roles)
+                selectinload(Process.roles),
             )
             .offset(offset)
             .limit(limit)
@@ -94,7 +95,7 @@ class ProcessService(BaseService):
                 selectinload(Process.departments),
                 selectinload(Process.locations),
                 selectinload(Process.resources),
-                selectinload(Process.roles)
+                selectinload(Process.roles),
             )
             .where(Process.id == process_id)
         )
@@ -115,23 +116,26 @@ class ProcessService(BaseService):
             raise HTTPException(status_code=404, detail="Process not found")
         try:
             # Update process fields
-            update_data = process_data.model_dump(exclude={"department_ids", "location_ids", "resource_ids", "role_ids"}, exclude_unset=True)
+            update_data = process_data.model_dump(
+                exclude={"department_ids", "location_ids", "resource_ids", "role_ids"},
+                exclude_unset=True,
+            )
             for key, value in update_data.items():
                 if value is not None:  # Only update if the value is not None
                     setattr(process, key, value)
-            
+
             # Handle relationships
             await self._update_relationships(
                 process,
                 department_ids=process_data.department_ids,
                 location_ids=process_data.location_ids,
                 resource_ids=process_data.resource_ids,
-                role_ids=process_data.role_ids
+                role_ids=process_data.role_ids,
             )
-            
+
             # Finally commit all
             await self.session.commit()
-            
+
             # refresh the process to get the id
             await self.session.refresh(process)
 
@@ -163,17 +167,16 @@ class ProcessService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-
     async def _update_relationships(
-        self, 
-        process: Process, 
+        self,
+        process: Process,
         department_ids: Optional[List[int]] = None,
         location_ids: Optional[List[int]] = None,
         resource_ids: Optional[List[int]] = None,
-        role_ids: Optional[List[int]] = None
+        role_ids: Optional[List[int]] = None,
     ) -> None:
         """Update the many-to-many relationships of a process
-        
+
         This method handles adding and removing related entities based on the provided IDs.
 
         Args:
@@ -185,31 +188,17 @@ class ProcessService(BaseService):
         """
         if department_ids is not None:
             await self.update_many_to_many_relationship(
-                process.departments, 
-                Department, 
-                department_ids
+                process.departments, Department, department_ids
             )
-        
+
         if location_ids is not None:
-            await self.update_many_to_many_relationship(
-                process.locations, 
-                Location, 
-                location_ids
-            )
-        
+            await self.update_many_to_many_relationship(process.locations, Location, location_ids)
+
         if resource_ids is not None:
-            await self.update_many_to_many_relationship(
-                process.resources, 
-                Resource, 
-                resource_ids
-            )
-        
+            await self.update_many_to_many_relationship(process.resources, Resource, resource_ids)
+
         if role_ids is not None:
-            await self.update_many_to_many_relationship(
-                process.roles, 
-                Role, 
-                role_ids
-            )
-        
+            await self.update_many_to_many_relationship(process.roles, Role, role_ids)
+
         await self.session.commit()
         await self.session.refresh(process)

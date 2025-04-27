@@ -1,9 +1,9 @@
 import pytest
-from app.domains.process.process_schemas import ProcessCreate, ProcessUpdate
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.domains.process.process_dependencies import get_process_service
-from unittest.mock import patch, MagicMock
+from app.domains.process.process_schemas import ProcessCreate, ProcessUpdate
 
 
 @pytest.mark.asyncio
@@ -24,9 +24,9 @@ class TestProcessService:
             department_ids=[1],  # Assuming a department with ID 1 exists
             location_ids=[1],  # Assuming a location with ID 1 exists
             resource_ids=[1],  # Assuming a resource with ID 1 exists
-            role_ids=[1]  # Assuming a role with ID 1 exists
+            role_ids=[1],  # Assuming a role with ID 1 exists
         )
-        
+
         # Call the create_process method
         created_process = await self.service.create_process(process_data)
 
@@ -55,13 +55,13 @@ class TestProcessService:
             department_ids=[1],
             location_ids=[1],
             resource_ids=[1],
-            role_ids=[1]
+            role_ids=[1],
         )
 
         # Check if it raises an HTTPException with appropriate status code
         with pytest.raises(HTTPException) as excinfo:
             await self.service.create_process(invalid_process_data)
-        
+
         assert excinfo.value.status_code == 500  # Custom error code for failure
         # Check for foreign key violation in the error message
         assert "ForeignKeyViolationError" in str(excinfo.value.detail)
@@ -76,21 +76,21 @@ class TestProcessService:
             department_ids=[],
             location_ids=[],
             resource_ids=[],
-            role_ids=[]
+            role_ids=[],
         )
         await self.service.create_process(process_data)
-        
+
         # Test the get_processes method with default pagination
         processes = await self.service.get_processes()
-        
+
         # Assertions
         assert isinstance(processes, list)
         assert len(processes) > 0
-        
+
         # Test pagination with limit
         limited_processes = await self.service.get_processes(limit=1)
         assert len(limited_processes) <= 1
-        
+
         # Test pagination with offset
         offset_processes = await self.service.get_processes(offset=1, limit=10)
         if len(processes) > 1:
@@ -107,14 +107,14 @@ class TestProcessService:
             department_ids=[1],
             location_ids=[1],
             resource_ids=[],
-            role_ids=[]
+            role_ids=[],
         )
         created_process = await self.service.create_process(process_data)
         process_id = created_process.id
-        
+
         # Test getting the process by ID
         retrieved_process = await self.service.get_process_by_id(process_id)
-        
+
         # Assertions
         assert retrieved_process is not None
         assert retrieved_process.id == process_id
@@ -128,11 +128,11 @@ class TestProcessService:
         """Test 404 error when process ID doesn't exist"""
         # Use a very large ID that's unlikely to exist
         non_existent_id = 99999
-        
+
         # Check if it raises an HTTPException with status code 404
         with pytest.raises(HTTPException) as excinfo:
             await self.service.get_process_by_id(non_existent_id)
-        
+
         assert excinfo.value.status_code == 404
         assert "not found" in str(excinfo.value.detail).lower()
 
@@ -146,22 +146,22 @@ class TestProcessService:
             department_ids=[],
             location_ids=[],
             resource_ids=[],
-            role_ids=[]
+            role_ids=[],
         )
         created_process = await self.service.create_process(process_data)
         process_id = created_process.id
-        
+
         # Update data
         update_data = ProcessUpdate(
             title="Updated Process Title",
             description="Updated description",
             department_ids=[1],  # Assuming department with ID 1 exists
-            location_ids=[1]     # Assuming location with ID 1 exists
+            location_ids=[1],  # Assuming location with ID 1 exists
         )
-        
+
         # Update the process
         updated_process = await self.service.update_process(process_id, update_data)
-        
+
         # Assertions
         assert updated_process.id == process_id
         assert updated_process.title == update_data.title
@@ -170,7 +170,7 @@ class TestProcessService:
         assert updated_process.departments[0].id == update_data.department_ids[0]
         assert len(updated_process.locations) == 1
         assert updated_process.locations[0].id == update_data.location_ids[0]
-        
+
         # Original data should be preserved if not included in update
         assert updated_process.created_by_id == process_data.created_by_id
 
@@ -179,11 +179,11 @@ class TestProcessService:
         # Use a very large ID that's unlikely to exist
         non_existent_id = 99999
         update_data = ProcessUpdate(title="Updated Title")
-        
+
         # Check if it raises an HTTPException with status code 404
         with pytest.raises(HTTPException) as excinfo:
             await self.service.update_process(non_existent_id, update_data)
-        
+
         assert excinfo.value.status_code == 404
         assert "not found" in str(excinfo.value.detail).lower()
 
@@ -197,21 +197,21 @@ class TestProcessService:
             department_ids=[],
             location_ids=[],
             resource_ids=[],
-            role_ids=[]
+            role_ids=[],
         )
         created_process = await self.service.create_process(process_data)
         process_id = created_process.id
-        
+
         # Update with invalid department ID
         invalid_update = ProcessUpdate(
             title="Updated with Invalid Department",
-            department_ids=[99999]  # Assuming this department ID doesn't exist
+            department_ids=[99999],  # Assuming this department ID doesn't exist
         )
-        
+
         # Check if it raises an HTTPException
         with pytest.raises(HTTPException) as excinfo:
             await self.service.update_process(process_id, invalid_update)
-        
+
         assert excinfo.value.status_code == 500
 
     async def test_delete_process(self):
@@ -224,29 +224,29 @@ class TestProcessService:
             department_ids=[],
             location_ids=[],
             resource_ids=[],
-            role_ids=[]
+            role_ids=[],
         )
         created_process = await self.service.create_process(process_data)
         process_id = created_process.id
-        
+
         # Delete the process
         await self.service.delete_process(process_id)
-        
+
         # Verify it's deleted by trying to get it
         with pytest.raises(HTTPException) as excinfo:
             await self.service.get_process_by_id(process_id)
-        
+
         assert excinfo.value.status_code == 404
 
     async def test_delete_process_not_found(self):
         """Test delete with non-existent process ID"""
         # Use a very large ID that's unlikely to exist
         non_existent_id = 99999
-        
+
         # Check if it raises an HTTPException with status code 404
         with pytest.raises(HTTPException) as excinfo:
             await self.service.delete_process(non_existent_id)
-        
+
         assert excinfo.value.status_code == 404
         assert "not found" in str(excinfo.value.detail).lower()
 
@@ -260,25 +260,25 @@ class TestProcessService:
             department_ids=[],
             location_ids=[],
             resource_ids=[],
-            role_ids=[]
+            role_ids=[],
         )
         created_process = await self.service.create_process(process_data)
         process_id = created_process.id
-        
+
         # Mock the session's delete method to raise an exception
         original_delete = self.service.session.delete
-        
+
         async def mock_delete_with_exception(*args, **kwargs):
             raise Exception("Database error during delete")
-        
+
         # Replace the delete method with our mocked version
         self.service.session.delete = mock_delete_with_exception
-        
+
         try:
             # The delete operation should now raise an HTTPException
             with pytest.raises(HTTPException) as excinfo:
                 await self.service.delete_process(process_id)
-            
+
             # Verify the exception details
             assert excinfo.value.status_code == 500
             assert "Database error during delete" in str(excinfo.value.detail)

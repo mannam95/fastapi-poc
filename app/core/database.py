@@ -3,18 +3,18 @@ from typing import Annotated, AsyncIterator, Union
 
 from fastapi import Depends
 from sqlalchemy import text
+from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import (
-    AsyncSession,
     AsyncEngine,
+    AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.engine.url import URL
-
 
 Base = declarative_base()
 SCHEMA = "public"  # Default PostgreSQL schema
+
 
 class DatabaseSessionManager:
     def __init__(self):
@@ -23,20 +23,19 @@ class DatabaseSessionManager:
 
     def init(self, host: Union[str, URL]):
         """Initialize the database engine with the given URL
-        
+
         Args:
             host: Database URL as string or SQLAlchemy URL object
         """
         # Ensure we have a string for the database URL
         host_str = str(host) if not isinstance(host, str) else host
-        
+
         self._engine = create_async_engine(
-            url=host_str, 
-            pool_size=10, 
-            max_overflow=0, 
-            pool_pre_ping=True
+            url=host_str, pool_size=10, max_overflow=0, pool_pre_ping=True
         )
-        self._sessionmaker = async_sessionmaker(autocommit=False, autoflush=False, bind=self._engine)
+        self._sessionmaker = async_sessionmaker(
+            autocommit=False, autoflush=False, bind=self._engine
+        )
 
     async def close(self):
         if self._engine is None:
@@ -45,30 +44,30 @@ class DatabaseSessionManager:
 
         self._engine = None
         self._sessionmaker = None
-        
+
     def session(self) -> AsyncSession:
         if self._sessionmaker is None:
             raise Exception("DatabaseSessionManager is not initialized")
         return self._sessionmaker()
-        
+
     async def create_all(self):
         if self._engine is None:
             raise Exception("DatabaseSessionManager is not initialized")
-        
+
         # Create tables
         async with self._engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
+
 sessionmanager = DatabaseSessionManager()
+
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:
     session = sessionmanager.session()
     try:
         # Set search path only if a specific schema is defined
         if SCHEMA != "public":
-            await session.execute(
-                text(f"SET search_path TO {SCHEMA}")
-            )
+            await session.execute(text(f"SET search_path TO {SCHEMA}"))
         yield session
     except Exception:
         await session.rollback()
@@ -80,59 +79,114 @@ async def get_db_session() -> AsyncIterator[AsyncSession]:
 
 DBSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
+
 async def create_db_and_tables():
     """Initialize the database and create all tables"""
-    try:       
+    try:
         await sessionmanager.create_all()
     except Exception as e:
         print(f"Error creating database tables: {str(e)}")
         raise
 
+
 # use the DBSessionDep via dependency injection
 async def create_initial_data():
     """Create initial data for the database"""
     try:
-        from app.domains.user.user_model import User
         from app.domains.department.department_model import Department
         from app.domains.location.location_model import Location
+        from app.domains.process.process_model import Process
         from app.domains.resource.resource_model import Resource
         from app.domains.role.role_model import Role
-        from app.domains.process.process_model import Process
-        
+        from app.domains.user.user_model import User
+
         # get session
         session = sessionmanager.session()
-        
+
         # create two users
         user1 = User(title="user1", created_at=datetime.datetime.now())
         user2 = User(title="user2", created_at=datetime.datetime.now())
-        
+
         # Add and flush users first to get their IDs
         session.add_all([user1, user2])
         await session.flush()
-        
+
         # create two departments
-        department1 = Department(title="department1", created_at=datetime.datetime.now(), created_by_id=user1.id)
-        department2 = Department(title="department2", created_at=datetime.datetime.now(), created_by_id=user2.id)
-        
+        department1 = Department(
+            title="department1",
+            created_at=datetime.datetime.now(),
+            created_by_id=user1.id,
+        )
+        department2 = Department(
+            title="department2",
+            created_at=datetime.datetime.now(),
+            created_by_id=user2.id,
+        )
+
         # create two locations
-        location1 = Location(title="location1", created_at=datetime.datetime.now(), created_by_id=user1.id)
-        location2 = Location(title="location2", created_at=datetime.datetime.now(), created_by_id=user2.id)
-        
+        location1 = Location(
+            title="location1",
+            created_at=datetime.datetime.now(),
+            created_by_id=user1.id,
+        )
+        location2 = Location(
+            title="location2",
+            created_at=datetime.datetime.now(),
+            created_by_id=user2.id,
+        )
+
         # create two resources
-        resource1 = Resource(title="resource1", created_at=datetime.datetime.now(), created_by_id=user1.id)
-        resource2 = Resource(title="resource2", created_at=datetime.datetime.now(), created_by_id=user2.id) 
-        
+        resource1 = Resource(
+            title="resource1",
+            created_at=datetime.datetime.now(),
+            created_by_id=user1.id,
+        )
+        resource2 = Resource(
+            title="resource2",
+            created_at=datetime.datetime.now(),
+            created_by_id=user2.id,
+        )
+
         # create two roles
         role1 = Role(title="role1", created_at=datetime.datetime.now(), created_by_id=user1.id)
         role2 = Role(title="role2", created_at=datetime.datetime.now(), created_by_id=user2.id)
-        
+
         # create two processes
-        process1 = Process(title="process1", created_at=datetime.datetime.now(), created_by_id=user1.id, departments=[department1], locations=[location1], resources=[resource1], roles=[role1])
-        process2 = Process(title="process2", created_at=datetime.datetime.now(), created_by_id=user2.id, departments=[department2], locations=[location2], resources=[resource2], roles=[role2])
+        process1 = Process(
+            title="process1",
+            created_at=datetime.datetime.now(),
+            created_by_id=user1.id,
+            departments=[department1],
+            locations=[location1],
+            resources=[resource1],
+            roles=[role1],
+        )
+        process2 = Process(
+            title="process2",
+            created_at=datetime.datetime.now(),
+            created_by_id=user2.id,
+            departments=[department2],
+            locations=[location2],
+            resources=[resource2],
+            roles=[role2],
+        )
 
         # Add all remaining objects
-        session.add_all([department1, department2, location1, location2, resource1, resource2, role1, role2, process1, process2])
-        
+        session.add_all(
+            [
+                department1,
+                department2,
+                location1,
+                location2,
+                resource1,
+                resource2,
+                role1,
+                role2,
+                process1,
+                process2,
+            ]
+        )
+
         await session.commit()
         await session.close()
     except Exception as e:

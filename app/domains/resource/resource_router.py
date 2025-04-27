@@ -1,22 +1,21 @@
 from typing import List
+
 from fastapi import APIRouter, status
 
-from app.domains.resource.resource_schemas import (
-    ResourceCreate, 
-    ResourceRead, 
-    ResourceUpdate
-)
 from app.domains.resource.resource_dependencies import ResourceServiceDep
+from app.domains.resource.resource_schemas import (
+    ResourceCreate,
+    ResourceRead,
+    ResourceUpdate,
+)
 
 router = APIRouter()
 
 # CRUD operations
 
+
 @router.post("/", response_model=ResourceRead, status_code=status.HTTP_201_CREATED)
-async def create_resource(
-    service: ResourceServiceDep,
-    resource_in: ResourceCreate
-):
+async def create_resource(service: ResourceServiceDep, resource_in: ResourceCreate):
     """Create a new resource"""
     return await service.create_resource(resource_in)
 
@@ -24,7 +23,7 @@ async def create_resource(
 @router.get("/", response_model=List[ResourceRead])
 async def read_resources(
     service: ResourceServiceDep,
-    offset: int = 0, 
+    offset: int = 0,
     limit: int = 100,
 ):
     """Get list of resources"""

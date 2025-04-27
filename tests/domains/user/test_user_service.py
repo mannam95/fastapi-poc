@@ -1,9 +1,9 @@
 import pytest
-from app.domains.user.user_schemas import UserCreate, UserUpdate
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.domains.user.user_dependencies import get_user_service
-from unittest.mock import patch, MagicMock
+from app.domains.user.user_schemas import UserCreate, UserUpdate
 
 
 @pytest.mark.asyncio
@@ -17,10 +17,8 @@ class TestUserService:
     async def test_create_user_integration(self):
         """Test the 'create_user' method"""
         # Prepare test data
-        user_data = UserCreate(
-            title="Test User"
-        )
-        
+        user_data = UserCreate(title="Test User")
+
         # Call the create_user method
         created_user = await self.service.create_user(user_data)
 
@@ -33,22 +31,20 @@ class TestUserService:
     async def test_get_users(self):
         """Test retrieving a list of users with pagination"""
         # Create a user to ensure we have at least one in the database
-        user_data = UserCreate(
-            title="User for List Test"
-        )
+        user_data = UserCreate(title="User for List Test")
         await self.service.create_user(user_data)
-        
+
         # Test the get_users method with default pagination
         users = await self.service.get_users()
-        
+
         # Assertions
         assert isinstance(users, list)
         assert len(users) > 0
-        
+
         # Test pagination with limit
         limited_users = await self.service.get_users(limit=1)
         assert len(limited_users) <= 1
-        
+
         # Test pagination with skip
         skip_users = await self.service.get_users(skip=1, limit=10)
         if len(users) > 1:
@@ -58,15 +54,13 @@ class TestUserService:
     async def test_get_user_by_id(self):
         """Test retrieving a single user by ID"""
         # Create a user to get a valid ID
-        user_data = UserCreate(
-            title="User for Get Test"
-        )
+        user_data = UserCreate(title="User for Get Test")
         created_user = await self.service.create_user(user_data)
         user_id = created_user.id
-        
+
         # Test getting the user by ID
         retrieved_user = await self.service.get_user_by_id(user_id)
-        
+
         # Assertions
         assert retrieved_user is not None
         assert retrieved_user.id == user_id
@@ -77,31 +71,27 @@ class TestUserService:
         """Test 404 error when user ID doesn't exist"""
         # Use a very large ID that's unlikely to exist
         non_existent_id = 99999
-        
+
         # Check if it raises an HTTPException with status code 404
         with pytest.raises(HTTPException) as excinfo:
             await self.service.get_user_by_id(non_existent_id)
-        
+
         assert excinfo.value.status_code == 404
         assert "not found" in str(excinfo.value.detail).lower()
 
     async def test_update_user(self):
         """Test updating an existing user"""
         # Create a user to update
-        user_data = UserCreate(
-            title="Original User Title"
-        )
+        user_data = UserCreate(title="Original User Title")
         created_user = await self.service.create_user(user_data)
         user_id = created_user.id
-        
+
         # Update data
-        update_data = UserUpdate(
-            title="Updated User Title"
-        )
-        
+        update_data = UserUpdate(title="Updated User Title")
+
         # Update the user
         updated_user = await self.service.update_user(user_id, update_data)
-        
+
         # Assertions
         assert updated_user.id == user_id
         assert updated_user.title == update_data.title
@@ -112,70 +102,66 @@ class TestUserService:
         # Use a very large ID that's unlikely to exist
         non_existent_id = 99999
         update_data = UserUpdate(title="Updated Title")
-        
+
         # Check if it raises an HTTPException with status code 404
         with pytest.raises(HTTPException) as excinfo:
             await self.service.update_user(non_existent_id, update_data)
-        
+
         assert excinfo.value.status_code == 404
         assert "not found" in str(excinfo.value.detail).lower()
 
     async def test_delete_user(self):
         """Test deleting a user"""
         # Create a user to delete
-        user_data = UserCreate(
-            title="User to Delete"
-        )
+        user_data = UserCreate(title="User to Delete")
         created_user = await self.service.create_user(user_data)
         user_id = created_user.id
-        
+
         # Delete the user
         await self.service.delete_user(user_id)
-        
+
         # Verify it's deleted by trying to get it
         with pytest.raises(HTTPException) as excinfo:
             await self.service.get_user_by_id(user_id)
-        
+
         assert excinfo.value.status_code == 404
 
     async def test_delete_user_not_found(self):
         """Test delete with non-existent user ID"""
         # Use a very large ID that's unlikely to exist
         non_existent_id = 99999
-        
+
         # Check if it raises an HTTPException with status code 404
         with pytest.raises(HTTPException) as excinfo:
             await self.service.delete_user(non_existent_id)
-        
+
         assert excinfo.value.status_code == 404
         assert "not found" in str(excinfo.value.detail).lower()
 
     async def test_delete_user_exception(self):
         """Test that exceptions during user deletion are handled correctly"""
         # Create a user to get a valid ID
-        user_data = UserCreate(
-            title="User for Exception Test"
-        )
+        user_data = UserCreate(title="User for Exception Test")
         created_user = await self.service.create_user(user_data)
         user_id = created_user.id
-        
+
         # Mock the session's delete method to raise an exception
         original_delete = self.service.session.delete
-        
+
         async def mock_delete_with_exception(*args, **kwargs):
             raise Exception("Database error during delete")
-        
+
         # Replace the delete method with our mocked version
         self.service.session.delete = mock_delete_with_exception
-        
+
         try:
             # The delete operation should now raise an HTTPException
             with pytest.raises(HTTPException) as excinfo:
                 await self.service.delete_user(user_id)
-            
+
             # Verify the exception details
             assert excinfo.value.status_code == 500
             assert "Database error during delete" in str(excinfo.value.detail)
         finally:
             # Restore the original delete method
-            self.service.session.delete = original_delete 
+            self.service.session.delete = original_delete
