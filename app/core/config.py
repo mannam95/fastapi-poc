@@ -18,11 +18,11 @@ class Settings(BaseSettings):
     ]
 
     # PostgreSQL
-    POSTGRES_SERVER: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
-    POSTGRES_PORT: str  # This is coming in as a string from environment variables
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "app"
+    POSTGRES_PORT: str = "5432"  # This is coming in as a string from environment variables
     DATABASE_URI: Union[PostgresDsn, None] = None
 
     @field_validator("POSTGRES_PORT")
@@ -47,14 +47,16 @@ class Settings(BaseSettings):
     def assemble_db_connection(cls, v: Union[str, None], values) -> Union[str, None]:
         if isinstance(v, str):
             return v
-        return PostgresDsn.build(
+        
+        # Convert PostgresDsn to string to match the return type
+        return str(PostgresDsn.build(
             scheme="postgresql+asyncpg",  # Using asyncpg driver for async SQLAlchemy
             username=values.data.get("POSTGRES_USER"),
             password=values.data.get("POSTGRES_PASSWORD"),
             host=values.data.get("POSTGRES_SERVER"),
             port=values.data.get("POSTGRES_PORT"),
             path=f"{values.data.get('POSTGRES_DB') or ''}",
-        )
+        ))
 
 
 settings = Settings()
