@@ -62,6 +62,19 @@ clean:
 	sudo rm -rf test-postgres-data
 	sudo rm -rf .pytest_cache
 	sudo rm -rf .coverage
+	sudo find . -type d -name __pycache__ -exec rm -rf {} +
+	sudo find . -type f -name "*.pyc" -delete
+	sudo find . -type f -name "*.pyo" -delete
+	sudo find . -type f -name "*.pyd" -delete
+	sudo find . -type f -name ".coverage" -delete
+	sudo find . -type d -name "*.egg-info" -exec rm -rf {} +
+	sudo find . -type d -name "*.egg" -exec rm -rf {} +
+	sudo find . -type d -name ".pytest_cache" -exec rm -rf {} +
+	sudo find . -type d -name ".coverage" -exec rm -rf {} +
+	sudo find . -type d -name "htmlcov" -exec rm -rf {} +
+	sudo find . -type d -name ".mypy_cache" -exec rm -rf {} +
+	sudo rm -rf build/
+	sudo rm -rf dist/
 
 # Help
 help:
