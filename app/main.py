@@ -32,6 +32,10 @@ app = FastAPI(
     description="FastAPI Proof of Concept",
     version="0.1.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": 0,
+        "docExpansion": None
+    },
     lifespan=lifespan,
 )
 
