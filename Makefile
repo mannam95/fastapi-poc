@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint format migrations migrate build shell clean help
+.PHONY: up down logs test lint format migrations migrate build shell clean help test-unit test-integration
 
 # Docker commands
 up:
@@ -14,11 +14,20 @@ build:
 	docker compose build
 
 # Test commands
+test-build:
+	docker compose -f docker-compose.test.yml build
+
 test:
-	docker compose run --rm api pytest
+	docker compose -f docker-compose.test.yml run --rm test-api pytest
 
 test-cov:
-	docker compose run --rm api pytest --cov=app --cov-report=term-missing
+	docker compose -f docker-compose.test.yml run --rm test-api pytest --cov=app --cov-report=term-missing
+
+test-unit:
+	docker compose -f docker-compose.test.yml run --rm test-api pytest -m unit
+
+test-integration:
+	docker compose -f docker-compose.test.yml run --rm test-api pytest -m integration
 
 # Database commands
 migrations:
@@ -46,10 +55,11 @@ shell:
 
 clean:
 	docker compose down
+	docker compose -f docker-compose.test.yml down
 	docker volume prune -f
 	docker system prune -f
 	sudo rm -rf postgres-data
-
+	sudo rm -rf test-postgres-data
 # Help
 help:
 	@echo "Available commands:"
@@ -59,6 +69,8 @@ help:
 	@echo "  build           Build Docker images"
 	@echo "  test            Run tests"
 	@echo "  test-cov        Run tests with coverage"
+	@echo "  test-unit       Run unit tests"
+	@echo "  test-integration Run integration tests"
 	@echo "  migrations m='' Create a new migration"
 	@echo "  migrate         Apply migrations"
 	@echo "  lint            Run linters"

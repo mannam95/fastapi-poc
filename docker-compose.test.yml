@@ -1,0 +1,46 @@
+services:
+  test-api:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+    environment:
+      - POSTGRES_SERVER=test-postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=test_db
+      - POSTGRES_PORT=5432
+      - ENV=development
+    networks:
+      - test-app-network
+
+  test-postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=test_db
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432" # expose the new port
+    volumes:
+      - ./test-postgres-data:/var/lib/postgresql/data:cached
+    networks:
+      - test-app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  test-app-network:

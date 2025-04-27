@@ -9,6 +9,7 @@ This is a FastAPI Proof of Concept project demonstrating the use of async SQLAlc
 - Migration support with Alembic
 - Dependency injection pattern for database sessions
 - Docker Compose setup for development
+- Comprehensive test suite with pytest
 
 ## Requirements
 
@@ -60,6 +61,46 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+## Testing
+
+The project includes a comprehensive test suite using pytest. Tests are organized by domain and type.
+
+### Running Tests
+
+To run tests using Docker:
+
+```bash
+# Run all tests
+make test
+
+# Run tests with coverage
+make test-cov
+
+# Run specific test types
+make test-unit
+make test-integration
+make test-service
+make test-router
+
+# Run tests for specific domains
+make test-process
+```
+
+To run tests locally:
+
+```bash
+# Create a test database
+createdb test_db
+
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=app --cov-report=term-missing
+```
+
+For more information about testing, see the [Testing Guide](tests/README.md).
+
 ## Project Structure
 
 ```
@@ -76,6 +117,10 @@ app/
 │   │   ├── process_schemas.py  # Pydantic schemas
 │   │   ├── process_service.py  # Business logic
 ├── models/                 # SQLAlchemy models (imports)
+tests/
+├── conftest.py             # Test fixtures and configuration
+├── domains/                # Tests organized by domain
+│   ├── process/            # Process domain tests
 ```
 
 ## Working with Async SQLAlchemy
