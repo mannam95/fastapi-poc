@@ -27,6 +27,7 @@ class DepartmentBase(BaseModel):
 class DepartmentCreate(DepartmentBase):
     """Schema for creating a new department"""
     created_by_id: int
+    process_ids: Optional[List[int]] = None
 
 class DepartmentRead(DepartmentBase):
     """Schema for reading department data"""
@@ -42,7 +43,4 @@ class DepartmentRead(DepartmentBase):
 class DepartmentUpdate(BaseModel):
     """Schema for updating a department"""
     title: Optional[str] = None
-
-# Schema for adding/removing process associations
-class DepartmentProcessAssociation(BaseModel):
-    process_id: int 
+    process_ids: Optional[List[int]] = None 

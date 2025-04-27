@@ -4,8 +4,7 @@ from fastapi import APIRouter, status
 from app.domains.department.department_schemas import (
     DepartmentCreate, 
     DepartmentRead, 
-    DepartmentUpdate,
-    DepartmentProcessAssociation
+    DepartmentUpdate
 )
 from app.domains.department.department_dependencies import DepartmentServiceDep
 
@@ -51,31 +50,11 @@ async def update_department(
     return await service.update_department(department_id, department_in)
 
 
-@router.delete("/{department_id}", response_model=DepartmentRead)
+@router.delete("/{department_id}", status_code=status.HTTP_200_OK)
 async def delete_department(
     department_id: int,
     service: DepartmentServiceDep,
 ):
     """Delete a department"""
-    return await service.delete_department(department_id)
-
-# Process association endpoints
-
-@router.post("/{department_id}/processes", response_model=DepartmentRead)
-async def add_process_to_department(
-    department_id: int,
-    association_data: DepartmentProcessAssociation,
-    service: DepartmentServiceDep,
-):
-    """Add a process to a department"""
-    return await service.add_process_to_department(department_id, association_data.process_id)
-
-
-@router.delete("/{department_id}/processes/{process_id}", response_model=DepartmentRead)
-async def remove_process_from_department(
-    department_id: int,
-    process_id: int,
-    service: DepartmentServiceDep,
-):
-    """Remove a process from a department"""
-    return await service.remove_process_from_department(department_id, process_id) 
+    await service.delete_department(department_id)
+    return {"message": "Department deleted successfully"}

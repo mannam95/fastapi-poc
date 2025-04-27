@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -11,20 +11,43 @@ class UserInfo(BaseModel):
     class Config:
         from_attributes = True
 
-class ProcessCreate(BaseModel):
+# Simplified schemas for related entities
+class DepartmentInfo(BaseModel):
+    id: int
     title: str
-    description: Optional[str] = None
-    created_by_id: int
     
     class Config:
         from_attributes = True
 
-class ProcessRead(BaseModel):
+class LocationInfo(BaseModel):
     id: int
+    title: str
+    
+    class Config:
+        from_attributes = True
+
+class ResourceInfo(BaseModel):
+    id: int
+    title: str
+    
+    class Config:
+        from_attributes = True
+
+class RoleInfo(BaseModel):
+    id: int
+    title: str
+    
+    class Config:
+        from_attributes = True
+
+class ProcessCreate(BaseModel):
     title: str
     description: Optional[str] = None
     created_by_id: int
-    created_by: Optional[UserInfo] = None
+    department_ids: Optional[List[int]] = []
+    location_ids: Optional[List[int]] = []
+    resource_ids: Optional[List[int]] = []
+    role_ids: Optional[List[int]] = []
     
     class Config:
         from_attributes = True
@@ -32,6 +55,24 @@ class ProcessRead(BaseModel):
 class ProcessUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    department_ids: Optional[List[int]] = []
+    location_ids: Optional[List[int]] = []
+    resource_ids: Optional[List[int]] = []
+    role_ids: Optional[List[int]] = []
+    
+    class Config:
+        from_attributes = True
+
+class ProcessResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    created_at: datetime
+    created_by: Optional[UserInfo] = None
+    departments: List[DepartmentInfo] = []
+    locations: List[LocationInfo] = []
+    resources: List[ResourceInfo] = []
+    roles: List[RoleInfo] = []
     
     class Config:
         from_attributes = True

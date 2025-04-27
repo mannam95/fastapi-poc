@@ -4,8 +4,7 @@ from fastapi import APIRouter, status
 from app.domains.location.location_schemas import (
     LocationCreate, 
     LocationRead, 
-    LocationUpdate,
-    LocationProcessAssociation
+    LocationUpdate
 )
 from app.domains.location.location_dependencies import LocationServiceDep
 
@@ -51,31 +50,11 @@ async def update_location(
     return await service.update_location(location_id, location_in)
 
 
-@router.delete("/{location_id}", response_model=LocationRead)
+@router.delete("/{location_id}", status_code=status.HTTP_200_OK)
 async def delete_location(
     location_id: int,
     service: LocationServiceDep,
 ):
     """Delete a location"""
-    return await service.delete_location(location_id)
-
-# Process association endpoints
-
-@router.post("/{location_id}/processes", response_model=LocationRead)
-async def add_process_to_location(
-    location_id: int,
-    association_data: LocationProcessAssociation,
-    service: LocationServiceDep,
-):
-    """Add a process to a location"""
-    return await service.add_process_to_location(location_id, association_data.process_id)
-
-
-@router.delete("/{location_id}/processes/{process_id}", response_model=LocationRead)
-async def remove_process_from_location(
-    location_id: int,
-    process_id: int,
-    service: LocationServiceDep,
-):
-    """Remove a process from a location"""
-    return await service.remove_process_from_location(location_id, process_id) 
+    await service.delete_location(location_id)
+    return {"message": "Location deleted successfully"}

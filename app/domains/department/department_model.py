@@ -24,5 +24,5 @@ class Department(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    created_by = relationship("User", back_populates="created_departments")
-    processes = relationship("Process", secondary=department_process, back_populates="departments") 
+    created_by = relationship("User", back_populates="created_departments", lazy="selectin")
+    processes = relationship("Process", secondary=department_process, back_populates="departments", lazy="selectin") 

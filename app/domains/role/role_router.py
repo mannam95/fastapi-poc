@@ -7,8 +7,7 @@ from fastapi import APIRouter, Query, status
 from app.domains.role.role_schemas import (
     RoleCreate, 
     RoleUpdate, 
-    RoleRead, 
-    RoleProcessAssociation
+    RoleRead
 )
 from app.domains.role.role_dependencies import RoleServiceDep
 
@@ -58,32 +57,11 @@ async def update_role(
     return await service.update_role(role_id, role_data)
 
 
-@router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{role_id}", status_code=status.HTTP_200_OK)
 async def delete_role(
     role_id: int,
     service: RoleServiceDep,
 ):
     """Delete a role"""
     await service.delete_role(role_id)
-    return None
-
-
-@router.post("/process-association", status_code=status.HTTP_201_CREATED)
-async def add_process_to_role(
-    association: RoleProcessAssociation,
-    service: RoleServiceDep,
-):
-    """Associate a process with a role"""
-    await service.add_process_to_role(association)
-    return {"message": "Process added to role successfully"}
-
-
-@router.delete("/{role_id}/processes/{process_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_process_from_role(
-    role_id: int,
-    process_id: int,
-    service: RoleServiceDep,
-):
-    """Remove a process association from a role"""
-    await service.remove_process_from_role(role_id, process_id)
-    return None 
+    return {"message": "Role deleted successfully"}

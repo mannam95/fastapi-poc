@@ -1,7 +1,7 @@
 # app/domains/resource/resource_service.py
 # This file contains the business logic for the resource domain
 
-from typing import List
+from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,6 +36,11 @@ class ResourceService:
             self.session.add(db_resource)    
             await self.session.commit()
             await self.session.refresh(db_resource)
+            
+            # Handle processes if provided
+            if resource_data.process_ids is not None:
+                await self._update_process_relationships(db_resource, resource_data.process_ids)
+                
             return db_resource
         except Exception as e:
             await self.session.rollback()
@@ -76,67 +81,71 @@ class ResourceService:
         if not resource:
             raise HTTPException(status_code=404, detail="Resource not found")
         try:
-            update_data = resource_data.model_dump(exclude_unset=True)
+            # Update resource fields
+            update_data = resource_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
             for key, value in update_data.items():
                 if value is not None:  # Only update if the value is not None
                     setattr(resource, key, value)
+            
+            # Handle processes if provided
+            if resource_data.process_ids is not None:
+                await self._update_process_relationships(resource, resource_data.process_ids)
+                
             await self.session.commit()
-            await self.session.refresh(resource, ['created_by', 'processes'])
+            await self.session.refresh(resource)
             return resource
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def delete_resource(self, resource_id: int) -> Resource:
-        """Delete a resource"""
+    async def delete_resource(self, resource_id: int) -> None:
+        """Delete a resource and clear all of its relationships"""
         resource = await self.session.get(Resource, resource_id)
         if not resource:
             raise HTTPException(status_code=404, detail="Resource not found")
         try:
+            # Clear all relationships first to ensure link table entries are removed
+            resource.processes = []
+            await self.session.commit()
+            
+            # Now delete the resource
             await self.session.delete(resource)
             await self.session.commit()
-            return resource
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
             
-    # Methods for managing process associations
-    
-    async def add_process_to_resource(self, resource_id: int, process_id: int) -> Resource:
-        """Add a process to a resource"""
-        resource = await self.session.get(Resource, resource_id)
-        if not resource:
-            raise HTTPException(status_code=404, detail="Resource not found")
+    async def _update_process_relationships(self, resource: Resource, process_ids: List[int]) -> None:
+        """Update the processes associated with a resource
+        
+        This replaces all existing associations with the new ones provided.
+        
+        Args:
+            resource: The resource to update
+            process_ids: List of process IDs to associate with the resource
+        """
+        # Clear existing relationships
+        resource.processes = []
+        
+        if process_ids:
+            # Get all processes by their IDs
+            result = await self.session.execute(
+                select(Process).where(Process.id.in_(process_ids))
+            )
+            processes = result.scalars().all()
             
-        process = await self.session.get(Process, process_id)
-        if not process:
-            raise HTTPException(status_code=404, detail="Process not found")
+            # Check if any process IDs were not found
+            found_ids = {process.id for process in processes}
+            missing_ids = set(process_ids) - found_ids
             
-        try:
-            resource.processes.append(process)
-            await self.session.commit()
-            await self.session.refresh(resource, ['processes'])
-            return resource
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+            if missing_ids:
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"Some Process IDs not found: {missing_ids}"
+                )
             
-    async def remove_process_from_resource(self, resource_id: int, process_id: int) -> Resource:
-        """Remove a process from a resource"""
-        resource = await self.session.get(Resource, resource_id)
-        if not resource:
-            raise HTTPException(status_code=404, detail="Resource not found")
+            # Update the relationships
+            resource.processes = processes
             
-        process = await self.session.get(Process, process_id)
-        if not process:
-            raise HTTPException(status_code=404, detail="Process not found")
-            
-        try:
-            if process in resource.processes:
-                resource.processes.remove(process)
-                await self.session.commit()
-                await self.session.refresh(resource, ['processes'])
-            return resource
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e)) 
+        await self.session.commit()
+        await self.session.refresh(resource) 

@@ -1,7 +1,7 @@
 # app/domains/department/department_service.py
 # This file contains the business logic for the department domain
 
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -37,6 +37,11 @@ class DepartmentService:
             self.session.add(db_department)    
             await self.session.commit()
             await self.session.refresh(db_department)
+            
+            # Handle processes if provided
+            if department_data.process_ids is not None:
+                await self._update_process_relationships(db_department, department_data.process_ids)
+                
             return db_department
         except Exception as e:
             await self.session.rollback()
@@ -77,67 +82,71 @@ class DepartmentService:
         if not department:
             raise HTTPException(status_code=404, detail="Department not found")
         try:
-            update_data = department_data.model_dump(exclude_unset=True)
+            # Update department fields
+            update_data = department_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
             for key, value in update_data.items():
                 if value is not None:  # Only update if the value is not None
                     setattr(department, key, value)
+            
+            # Handle processes if provided
+            if department_data.process_ids is not None:
+                await self._update_process_relationships(department, department_data.process_ids)
+                
             await self.session.commit()
-            await self.session.refresh(department, ['created_by', 'processes'])
+            await self.session.refresh(department)
             return department
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def delete_department(self, department_id: int) -> Department:
-        """Delete a department"""
+    async def delete_department(self, department_id: int) -> None:
+        """Delete a department and clear all of its relationships"""
         department = await self.session.get(Department, department_id)
         if not department:
             raise HTTPException(status_code=404, detail="Department not found")
         try:
+            # Clear all relationships first to ensure link table entries are removed
+            department.processes = []
+            await self.session.commit()
+            
+            # Now delete the department
             await self.session.delete(department)
             await self.session.commit()
-            return department
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
             
-    # Methods for managing process associations
-    
-    async def add_process_to_department(self, department_id: int, process_id: int) -> Department:
-        """Add a process to a department"""
-        department = await self.session.get(Department, department_id)
-        if not department:
-            raise HTTPException(status_code=404, detail="Department not found")
+    async def _update_process_relationships(self, department: Department, process_ids: List[int]) -> None:
+        """Update the processes associated with a department
+        
+        This replaces all existing associations with the new ones provided.
+        
+        Args:
+            department: The department to update
+            process_ids: List of process IDs to associate with the department
+        """
+        # Clear existing relationships
+        department.processes = []
+        
+        if process_ids:
+            # Get all processes by their IDs
+            result = await self.session.execute(
+                select(Process).where(Process.id.in_(process_ids))
+            )
+            processes = result.scalars().all()
             
-        process = await self.session.get(Process, process_id)
-        if not process:
-            raise HTTPException(status_code=404, detail="Process not found")
+            # Check if any process IDs were not found
+            found_ids = {process.id for process in processes}
+            missing_ids = set(process_ids) - found_ids
             
-        try:
-            department.processes.append(process)
-            await self.session.commit()
-            await self.session.refresh(department, ['processes'])
-            return department
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+            if missing_ids:
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"Some Process IDs not found: {missing_ids}"
+                )
             
-    async def remove_process_from_department(self, department_id: int, process_id: int) -> Department:
-        """Remove a process from a department"""
-        department = await self.session.get(Department, department_id)
-        if not department:
-            raise HTTPException(status_code=404, detail="Department not found")
+            # Update the relationships
+            department.processes = processes
             
-        process = await self.session.get(Process, process_id)
-        if not process:
-            raise HTTPException(status_code=404, detail="Process not found")
-            
-        try:
-            if process in department.processes:
-                department.processes.remove(process)
-                await self.session.commit()
-                await self.session.refresh(department, ['processes'])
-            return department
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e)) 
+        await self.session.commit()
+        await self.session.refresh(department) 

@@ -27,31 +27,21 @@ class RoleBase(BaseModel):
 
 class RoleCreate(RoleBase):
     """Schema for creating a new role"""
-    pass
+    created_by_id: int
+    process_ids: Optional[List[int]] = Field(None, description="IDs of processes to associate with this role")
 
 class RoleUpdate(BaseModel):
     """Schema for updating an existing role"""
     name: Optional[str] = Field(None, description="The name of the role")
     description: Optional[str] = Field(None, description="A description of the role")
-
-class ProcessBase(BaseModel):
-    """Base schema for Process reference in a Role"""
-    id: int = Field(..., description="The ID of the process")
-    name: str = Field(..., description="The name of the process")
-
-    class Config:
-        from_attributes = True
-
-# Schema for adding/removing process associations
-class RoleProcessAssociation(BaseModel):
-    """Schema for role-process association"""
-    role_id: int = Field(..., description="The ID of the role")
-    process_id: int = Field(..., description="The ID of the process")
+    process_ids: Optional[List[int]] = Field(None, description="IDs of processes to associate with this role")
 
 class RoleRead(RoleBase):
     """Schema for reading a role, including its ID and associated processes"""
     id: int = Field(..., description="The ID of the role")
-    processes: Optional[List[ProcessBase]] = Field(default=[], description="List of processes associated with this role")
+    created_by_id: int
+    created_by: Optional[UserInfo] = None
+    processes: List[ProcessInfo] = Field(default=[], description="List of processes associated with this role")
     
     class Config:
         from_attributes = True 

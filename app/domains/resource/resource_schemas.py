@@ -27,6 +27,7 @@ class ResourceBase(BaseModel):
 class ResourceCreate(ResourceBase):
     """Schema for creating a new resource"""
     created_by_id: int
+    process_ids: Optional[List[int]] = None
 
 class ResourceRead(ResourceBase):
     """Schema for reading resource data"""
@@ -42,7 +43,4 @@ class ResourceRead(ResourceBase):
 class ResourceUpdate(BaseModel):
     """Schema for updating a resource"""
     title: Optional[str] = None
-
-# Schema for adding/removing process associations
-class ResourceProcessAssociation(BaseModel):
-    process_id: int 
+    process_ids: Optional[List[int]] = None 

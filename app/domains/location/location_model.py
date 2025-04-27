@@ -24,5 +24,5 @@ class Location(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    created_by = relationship("User", back_populates="created_locations")
-    processes = relationship("Process", secondary=location_process, back_populates="locations") 
+    created_by = relationship("User", back_populates="created_locations", lazy="selectin")
+    processes = relationship("Process", secondary=location_process, back_populates="locations", lazy="selectin") 

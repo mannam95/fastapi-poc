@@ -77,7 +77,7 @@ class UserService:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def delete_user(self, user_id: int) -> User:
+    async def delete_user(self, user_id: int) -> None:
         """Delete a user"""
         user = await self.session.get(User, user_id)
         if not user:
@@ -85,7 +85,6 @@ class UserService:
         try:
             await self.session.delete(user)
             await self.session.commit()
-            return user
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e)) 

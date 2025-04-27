@@ -45,10 +45,11 @@ async def update_user(
     return await service.update_user(user_id, user_in)
 
 
-@router.delete("/{user_id}", response_model=UserRead)
+@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
 async def delete_user(
     user_id: int,
     service: UserServiceDep,
 ):
     """Delete a user"""
-    return await service.delete_user(user_id) 
+    await service.delete_user(user_id)
+    return {"message": "User deleted successfully"}

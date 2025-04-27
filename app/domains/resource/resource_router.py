@@ -4,8 +4,7 @@ from fastapi import APIRouter, status
 from app.domains.resource.resource_schemas import (
     ResourceCreate, 
     ResourceRead, 
-    ResourceUpdate,
-    ResourceProcessAssociation
+    ResourceUpdate
 )
 from app.domains.resource.resource_dependencies import ResourceServiceDep
 
@@ -51,31 +50,11 @@ async def update_resource(
     return await service.update_resource(resource_id, resource_in)
 
 
-@router.delete("/{resource_id}", response_model=ResourceRead)
+@router.delete("/{resource_id}", status_code=status.HTTP_200_OK)
 async def delete_resource(
     resource_id: int,
     service: ResourceServiceDep,
 ):
     """Delete a resource"""
-    return await service.delete_resource(resource_id)
-
-# Process association endpoints
-
-@router.post("/{resource_id}/processes", response_model=ResourceRead)
-async def add_process_to_resource(
-    resource_id: int,
-    association_data: ResourceProcessAssociation,
-    service: ResourceServiceDep,
-):
-    """Add a process to a resource"""
-    return await service.add_process_to_resource(resource_id, association_data.process_id)
-
-
-@router.delete("/{resource_id}/processes/{process_id}", response_model=ResourceRead)
-async def remove_process_from_resource(
-    resource_id: int,
-    process_id: int,
-    service: ResourceServiceDep,
-):
-    """Remove a process from a resource"""
-    return await service.remove_process_from_resource(resource_id, process_id) 
+    await service.delete_resource(resource_id)
+    return {"message": "Resource deleted successfully"}

@@ -24,5 +24,5 @@ class Resource(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    created_by = relationship("User", back_populates="created_resources")
-    processes = relationship("Process", secondary=resource_process, back_populates="resources") 
+    created_by = relationship("User", back_populates="created_resources", lazy="selectin")
+    processes = relationship("Process", secondary=resource_process, back_populates="resources", lazy="selectin") 

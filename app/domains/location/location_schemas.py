@@ -27,6 +27,7 @@ class LocationBase(BaseModel):
 class LocationCreate(LocationBase):
     """Schema for creating a new location"""
     created_by_id: int
+    process_ids: Optional[List[int]] = None
 
 class LocationRead(LocationBase):
     """Schema for reading location data"""
@@ -42,7 +43,4 @@ class LocationRead(LocationBase):
 class LocationUpdate(BaseModel):
     """Schema for updating a location"""
     title: Optional[str] = None
-
-# Schema for adding/removing process associations
-class LocationProcessAssociation(BaseModel):
-    process_id: int 
+    process_ids: Optional[List[int]] = None 

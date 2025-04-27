@@ -24,5 +24,5 @@ class Role(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    created_by = relationship("User", back_populates="created_roles")
-    processes = relationship("Process", secondary=role_process, back_populates="roles") 
+    created_by = relationship("User", back_populates="created_roles", lazy="selectin")
+    processes = relationship("Process", secondary=role_process, back_populates="roles", lazy="selectin") 
