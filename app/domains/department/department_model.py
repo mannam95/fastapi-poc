@@ -16,7 +16,7 @@ class Department(Base):
     
     __tablename__ = "departments"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     

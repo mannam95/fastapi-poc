@@ -7,7 +7,7 @@ class Process(Base):
     
     __tablename__ = "process"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
