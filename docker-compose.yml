@@ -9,7 +9,8 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       - POSTGRES_SERVER=postgres
       - POSTGRES_USER=postgres
@@ -35,6 +36,11 @@ services:
       - ./postgres-data:/var/lib/postgresql/data:cached
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   app-network:
