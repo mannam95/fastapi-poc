@@ -11,7 +11,7 @@ from app.domains.role.role_schemas import (
 )
 from app.domains.role.role_dependencies import RoleServiceDep
 
-router = APIRouter(prefix="/roles", tags=["roles"])
+router = APIRouter()
 
 
 @router.post("/", response_model=RoleRead, status_code=status.HTTP_201_CREATED)
@@ -49,8 +49,8 @@ async def get_role(
 
 @router.put("/{role_id}", response_model=RoleRead)
 async def update_role(
-    role_data: RoleUpdate,
     role_id: int,
+    role_data: RoleUpdate,
     service: RoleServiceDep,
 ):
     """Update a role's information"""
