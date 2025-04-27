@@ -3,6 +3,7 @@ from app.domains.department.department_schemas import DepartmentCreate, Departme
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from app.domains.department.department_dependencies import get_department_service
+from unittest.mock import patch, MagicMock
 
 
 @pytest.mark.asyncio
@@ -205,4 +206,36 @@ class TestDepartmentService:
             await self.service.delete_department(non_existent_id)
         
         assert excinfo.value.status_code == 404
-        assert "not found" in str(excinfo.value.detail).lower() 
+        assert "not found" in str(excinfo.value.detail).lower()
+
+    async def test_delete_department_exception(self):
+        """Test that exceptions during department deletion are handled correctly"""
+        # Create a department to get a valid ID
+        department_data = DepartmentCreate(
+            title="Department for Exception Test",
+            created_by_id=1,
+            process_ids=[]
+        )
+        created_department = await self.service.create_department(department_data)
+        department_id = created_department.id
+        
+        # Mock the session's delete method to raise an exception
+        original_delete = self.service.session.delete
+        
+        async def mock_delete_with_exception(*args, **kwargs):
+            raise Exception("Database error during delete")
+        
+        # Replace the delete method with our mocked version
+        self.service.session.delete = mock_delete_with_exception
+        
+        try:
+            # The delete operation should now raise an HTTPException
+            with pytest.raises(HTTPException) as excinfo:
+                await self.service.delete_department(department_id)
+            
+            # Verify the exception details
+            assert excinfo.value.status_code == 500
+            assert "Database error during delete" in str(excinfo.value.detail)
+        finally:
+            # Restore the original delete method
+            self.service.session.delete = original_delete 

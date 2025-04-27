@@ -162,7 +162,7 @@ class TestProcessRouter:
         assert delete_response.status_code == 200
         delete_data = delete_response.json()
         assert "message" in delete_data
-        assert "deleted successfully" in delete_data["message"].lower()
+        assert delete_data["message"] == "Process deleted successfully"
         
         # Verify it's gone by trying to get it
         get_response = await self.client.get(f"/api/v1/processes/{process_id}")
