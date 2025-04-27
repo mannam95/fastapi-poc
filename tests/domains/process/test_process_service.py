@@ -6,6 +6,7 @@ from app.domains.process.process_dependencies import get_process_service
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 class TestProcessService:
     @pytest.fixture(autouse=True)
     async def setup(self, db_session: AsyncSession):
