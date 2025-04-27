@@ -22,6 +22,9 @@ Tests are categorized using pytest markers:
 
 - `unit`: Unit tests that test individual functions/methods
 - `integration`: Integration tests that test interactions between components
+    - For example, consider process_router.py
+    - This file contains tests for the process router
+    - Each test case talks to multiple components (router → service → DB)
 - `service`: Tests for service layer logic
 - `router`: Tests for API endpoints
 
@@ -44,8 +47,6 @@ make test-integration
 make test-service
 make test-router
 
-# Run tests for specific domains
-make test-process
 ```
 
 ### Using Pytest Directly
@@ -64,15 +65,6 @@ pytest -m unit
 pytest -m integration
 pytest -m service
 pytest -m router
-
-# Run tests for a specific domain
-pytest tests/domains/process/
-
-# Run a specific test file
-pytest tests/domains/process/test_process_service.py
-
-# Run a specific test
-pytest tests/domains/process/test_process_service.py::TestProcessService::test_create_process
 ```
 
 ## Adding New Tests
