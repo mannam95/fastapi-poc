@@ -60,6 +60,9 @@ clean:
 	docker system prune -f
 	sudo rm -rf postgres-data
 	sudo rm -rf test-postgres-data
+	sudo rm -rf .pytest_cache
+	sudo rm -rf .coverage
+
 # Help
 help:
 	@echo "Available commands:"

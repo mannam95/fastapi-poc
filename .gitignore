@@ -174,3 +174,7 @@ cython_debug/
 .pypirc
 
 poc-goals.md
+
+# Ignore postgres data
+postgres-data/
+test-postgres-data/
