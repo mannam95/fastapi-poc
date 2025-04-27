@@ -13,9 +13,10 @@ from app.domains.department.department_model import Department
 from app.domains.location.location_model import Location
 from app.domains.resource.resource_model import Resource
 from app.domains.role.role_model import Role
+from app.domains.shared.base_service import BaseService
 
 
-class ProcessService:
+class ProcessService(BaseService):
     """Service for process-related operations"""
 
     def __init__(self, session: AsyncSession):
@@ -24,17 +25,19 @@ class ProcessService:
         Args:
             session: SQLAlchemy async session for database operations
         """
-        self.session = session
+        super().__init__(session)
 
     async def create_process(self, process_data: ProcessCreate) -> Process:
         """Create a new process with optional related entities"""
         try:
+            # Create new Process instance from input data
             db_process = Process(
                 title=process_data.title,
                 description=process_data.description,
                 created_by_id=process_data.created_by_id
             )
 
+            # Add the process to the database to get an ID
             self.session.add(db_process)
 
             # Handle relationships
@@ -49,8 +52,10 @@ class ProcessService:
             # Finally commit all
             await self.session.commit()
 
-            # refresh the process to get the id
+            # refresh the process to get the latest data
             await self.session.refresh(db_process)
+
+            # return the process
             return db_process
         
         except Exception as e:
@@ -59,6 +64,7 @@ class ProcessService:
 
     async def get_processes(self, offset: int = 0, limit: int = 100) -> List[Process]:
         """Get a list of processes with pagination and associated user data"""
+        # Get the processes with associated data
         result = await self.session.execute(
             select(Process)
             .options(
@@ -71,11 +77,16 @@ class ProcessService:
             .offset(offset)
             .limit(limit)
         )
+
+        # Convert the result to a list of processes
         processes = result.scalars().all()
+
+        # return the processes
         return processes
 
     async def get_process_by_id(self, process_id: int) -> Process:
         """Get a single process by ID with associated user data"""
+        # Get the process by ID with associated data
         result = await self.session.execute(
             select(Process)
             .options(
@@ -87,13 +98,18 @@ class ProcessService:
             )
             .where(Process.id == process_id)
         )
+
+        # Convert the result to a single process
         process = result.scalars().first()
         if not process:
             raise HTTPException(status_code=404, detail="Process not found")
+
+        # return the process
         return process
 
     async def update_process(self, process_id: int, process_data: ProcessUpdate) -> Process:
         """Update an existing process"""
+        # Get the process by ID
         process = await self.session.get(Process, process_id)
         if not process:
             raise HTTPException(status_code=404, detail="Process not found")
@@ -113,11 +129,13 @@ class ProcessService:
                 role_ids=process_data.role_ids
             )
             
-            # Commit all changes at once
+            # Finally commit all
             await self.session.commit()
             
-            # refresh the process to get latest data
+            # refresh the process to get the id
             await self.session.refresh(process)
+
+            # return the process
             return process
         except Exception as e:
             await self.session.rollback()
@@ -125,6 +143,7 @@ class ProcessService:
 
     async def delete_process(self, process_id: int) -> None:
         """Delete a process and clear all of its relationships"""
+        # Get the process by ID
         process = await self.session.get(Process, process_id)
         if not process:
             raise HTTPException(status_code=404, detail="Process not found")
@@ -134,10 +153,12 @@ class ProcessService:
             process.locations = []
             process.resources = []
             process.roles = []
-            
+
+            # Now delete the process
             await self.session.delete(process)
+
+            # Finally commit all
             await self.session.commit()
-            
         except Exception as e:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
@@ -154,71 +175,41 @@ class ProcessService:
         """Update the many-to-many relationships of a process
         
         This method handles adding and removing related entities based on the provided IDs.
+
+        Args:
+            process: The process to update
+            department_ids: List of department IDs to associate with the process
+            location_ids: List of location IDs to associate with the process
+            resource_ids: List of resource IDs to associate with the process
+            role_ids: List of role IDs to associate with the process
         """
         if department_ids is not None:
-            # Clear existing relationships
-            process.departments = []
-            
-            # Add new relationships
-            if department_ids:
-                departments = await self._get_entities_by_ids(Department, department_ids)
-                process.departments = departments
+            await self.update_many_to_many_relationship(
+                process.departments, 
+                Department, 
+                department_ids
+            )
         
         if location_ids is not None:
-            # Clear existing relationships
-            process.locations = []
-            
-            # Add new relationships
-            if location_ids:
-                locations = await self._get_entities_by_ids(Location, location_ids)
-                process.locations = locations
+            await self.update_many_to_many_relationship(
+                process.locations, 
+                Location, 
+                location_ids
+            )
         
         if resource_ids is not None:
-            # Clear existing relationships
-            process.resources = []
-            
-            # Add new relationships
-            if resource_ids:
-                resources = await self._get_entities_by_ids(Resource, resource_ids)
-                process.resources = resources
+            await self.update_many_to_many_relationship(
+                process.resources, 
+                Resource, 
+                resource_ids
+            )
         
         if role_ids is not None:
-            # Clear existing relationships
-            process.roles = []
-            
-            # Add new relationships
-            if role_ids:
-                roles = await self._get_entities_by_ids(Role, role_ids)
-                process.roles = roles
+            await self.update_many_to_many_relationship(
+                process.roles, 
+                Role, 
+                role_ids
+            )
         
         await self.session.commit()
         await self.session.refresh(process)
-
-
-    async def _get_entities_by_ids(self, model_class, ids: List[int]) -> List:
-        """Get entities by their IDs
-        
-        Args:
-            model_class: SQLAlchemy model class
-            ids: List of entity IDs
-            
-        Returns:
-            List of entity instances
-        """
-        result = await self.session.execute(
-            select(model_class).where(model_class.id.in_(ids))
-        )
-        entities = result.scalars().all()
-        
-        # Check if any IDs were not found
-        found_ids = {entity.id for entity in entities}
-        missing_ids = set(ids) - found_ids
-        
-        if missing_ids:
-            entity_name = model_class.__name__
-            raise HTTPException(
-                status_code=404, 
-                detail=f"Some {entity_name} IDs not found: {missing_ids}"
-            )
-        
-        return entities

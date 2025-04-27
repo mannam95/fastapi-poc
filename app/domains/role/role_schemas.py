@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from datetime import datetime
 
 # Nested schemas for related entities
@@ -22,26 +22,23 @@ class ProcessInfo(BaseModel):
 # Main schemas
 class RoleBase(BaseModel):
     """Base schema for Role with common attributes"""
-    name: str = Field(..., description="The name of the role")
-    description: Optional[str] = Field(None, description="A description of the role")
+    title: str
 
 class RoleCreate(RoleBase):
     """Schema for creating a new role"""
     created_by_id: int
-    process_ids: Optional[List[int]] = Field(None, description="IDs of processes to associate with this role")
+    process_ids: Optional[List[int]] = []
 
 class RoleUpdate(BaseModel):
     """Schema for updating an existing role"""
-    name: Optional[str] = Field(None, description="The name of the role")
-    description: Optional[str] = Field(None, description="A description of the role")
-    process_ids: Optional[List[int]] = Field(None, description="IDs of processes to associate with this role")
+    title: Optional[str] = None
+    process_ids: Optional[List[int]] = []
 
 class RoleRead(RoleBase):
     """Schema for reading a role, including its ID and associated processes"""
-    id: int = Field(..., description="The ID of the role")
-    created_by_id: int
+    id: int
     created_by: Optional[UserInfo] = None
-    processes: List[ProcessInfo] = Field(default=[], description="List of processes associated with this role")
+    processes: List[ProcessInfo] = []
     
     class Config:
         from_attributes = True 

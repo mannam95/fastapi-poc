@@ -27,13 +27,12 @@ class ResourceBase(BaseModel):
 class ResourceCreate(ResourceBase):
     """Schema for creating a new resource"""
     created_by_id: int
-    process_ids: Optional[List[int]] = None
+    process_ids: Optional[List[int]] = []
 
 class ResourceRead(ResourceBase):
     """Schema for reading resource data"""
     id: int
     created_at: datetime
-    created_by_id: int
     created_by: Optional[UserInfo] = None
     processes: List[ProcessInfo] = []
     
@@ -43,4 +42,4 @@ class ResourceRead(ResourceBase):
 class ResourceUpdate(BaseModel):
     """Schema for updating a resource"""
     title: Optional[str] = None
-    process_ids: Optional[List[int]] = None 
+    process_ids: Optional[List[int]] = [] 

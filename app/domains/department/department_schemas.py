@@ -27,7 +27,7 @@ class DepartmentBase(BaseModel):
 class DepartmentCreate(DepartmentBase):
     """Schema for creating a new department"""
     created_by_id: int
-    process_ids: Optional[List[int]] = None
+    process_ids: Optional[List[int]] = []
 
 class DepartmentRead(DepartmentBase):
     """Schema for reading department data"""
@@ -43,4 +43,4 @@ class DepartmentRead(DepartmentBase):
 class DepartmentUpdate(BaseModel):
     """Schema for updating a department"""
     title: Optional[str] = None
-    process_ids: Optional[List[int]] = None 
+    process_ids: Optional[List[int]] = [] 
