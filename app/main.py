@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.database import create_db_and_tables, sessionmanager
+from app.core.database import create_db_and_tables, create_initial_data, sessionmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +19,7 @@ async def lifespan(app: FastAPI):
     
     # Create database tables
     await create_db_and_tables()
+    await create_initial_data()
     
     yield
     
