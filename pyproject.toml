@@ -3,3 +3,7 @@ line-length = 100
 
 [tool.isort]
 profile = "black"
+
+[tool.mypy]
+namespace_packages = true
+explicit_package_bases = true
