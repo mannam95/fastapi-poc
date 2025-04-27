@@ -21,5 +21,8 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY . .
 
+# Add current user as owner so that the user can access the files
+RUN chown -R $USER:$GROUP .
+
 # Command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
