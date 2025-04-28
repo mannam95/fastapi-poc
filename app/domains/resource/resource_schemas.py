@@ -53,7 +53,18 @@ class ResourceCreate(ResourceBase):
     process_ids: Optional[List[int]] = []
 
 
-class ResourceRead(ResourceBase):
+class ResourceUpdate(BaseModel):
+    """
+    Schema for updating a resource.
+    All fields are optional to support partial updates of attributes
+    and process relationships.
+    """
+
+    title: Optional[str] = None
+    process_ids: Optional[List[int]] = []
+
+
+class ResourceResponse(ResourceBase):
     """
     Schema for reading resource data.
     Provides a complete representation of a resource including relationships
@@ -67,14 +78,3 @@ class ResourceRead(ResourceBase):
 
     class Config:
         from_attributes = True
-
-
-class ResourceUpdate(BaseModel):
-    """
-    Schema for updating a resource.
-    All fields are optional to support partial updates of attributes
-    and process relationships.
-    """
-
-    title: Optional[str] = None
-    process_ids: Optional[List[int]] = []

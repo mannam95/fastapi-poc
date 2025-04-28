@@ -5,7 +5,7 @@ from fastapi import APIRouter, status
 from app.domains.location.location_dependencies import LocationServiceDep
 from app.domains.location.location_schemas import (
     LocationCreate,
-    LocationRead,
+    LocationResponse,
     LocationUpdate,
 )
 
@@ -14,7 +14,7 @@ router = APIRouter()
 # CRUD operations
 
 
-@router.post("/", response_model=LocationRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=LocationResponse, status_code=status.HTTP_201_CREATED)
 async def create_location(service: LocationServiceDep, location_in: LocationCreate):
     """
     Create a new location.
@@ -27,25 +27,25 @@ async def create_location(service: LocationServiceDep, location_in: LocationCrea
     return await service.create_location(location_in)
 
 
-@router.get("/", response_model=List[LocationRead])
+@router.get("/", response_model=List[LocationResponse])
 async def read_locations(
     service: LocationServiceDep,
-    skip: int = 0,
+    offset: int = 0,
     limit: int = 100,
 ):
     """
     Get a list of locations with pagination.
 
     Args:
-        skip: Number of records to skip
+        offset: Number of records to offset
         limit: Maximum number of records to return
 
     Returns a list of locations with their details and process relationships.
     """
-    return await service.get_locations(skip, limit)
+    return await service.get_locations(offset, limit)
 
 
-@router.get("/{location_id}", response_model=LocationRead)
+@router.get("/{location_id}", response_model=LocationResponse)
 async def read_location(
     location_id: int,
     service: LocationServiceDep,
@@ -61,7 +61,7 @@ async def read_location(
     return await service.get_location_by_id(location_id)
 
 
-@router.put("/{location_id}", response_model=LocationRead)
+@router.put("/{location_id}", response_model=LocationResponse)
 async def update_location(
     location_id: int,
     location_in: LocationUpdate,

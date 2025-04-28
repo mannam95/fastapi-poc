@@ -5,7 +5,7 @@ from fastapi import APIRouter, status
 from app.domains.department.department_dependencies import DepartmentServiceDep
 from app.domains.department.department_schemas import (
     DepartmentCreate,
-    DepartmentRead,
+    DepartmentResponse,
     DepartmentUpdate,
 )
 
@@ -14,7 +14,7 @@ router = APIRouter()
 # CRUD operations
 
 
-@router.post("/", response_model=DepartmentRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED)
 async def create_department(service: DepartmentServiceDep, department_in: DepartmentCreate):
     """
     Create a new department.
@@ -27,25 +27,25 @@ async def create_department(service: DepartmentServiceDep, department_in: Depart
     return await service.create_department(department_in)
 
 
-@router.get("/", response_model=List[DepartmentRead])
+@router.get("/", response_model=List[DepartmentResponse])
 async def read_departments(
     service: DepartmentServiceDep,
-    skip: int = 0,
+    offset: int = 0,
     limit: int = 100,
 ):
     """
     Get a list of departments with pagination.
 
     Args:
-        skip: Number of records to skip
+        offset: Number of records to offset
         limit: Maximum number of records to return
 
     Returns a list of departments with their details and process relationships.
     """
-    return await service.get_departments(skip, limit)
+    return await service.get_departments(offset, limit)
 
 
-@router.get("/{department_id}", response_model=DepartmentRead)
+@router.get("/{department_id}", response_model=DepartmentResponse)
 async def read_department(
     department_id: int,
     service: DepartmentServiceDep,
@@ -61,7 +61,7 @@ async def read_department(
     return await service.get_department_by_id(department_id)
 
 
-@router.put("/{department_id}", response_model=DepartmentRead)
+@router.put("/{department_id}", response_model=DepartmentResponse)
 async def update_department(
     department_id: int,
     department_in: DepartmentUpdate,

@@ -28,19 +28,19 @@ async def create_process(service: ProcessServiceDep, process_in: ProcessCreate):
 @router.get("/", response_model=List[ProcessResponse])
 async def read_processes(
     service: ProcessServiceDep,
-    skip: int = 0,
+    offset: int = 0,
     limit: int = 100,
 ):
     """
     Get a list of processes with pagination.
 
     Args:
-        skip: Number of records to skip
+        offset: Number of records to offset
         limit: Maximum number of records to return
 
     Returns a list of processes with all their details and relationships.
     """
-    return await service.get_processes(skip, limit)
+    return await service.get_processes(offset, limit)
 
 
 @router.get("/{process_id}", response_model=ProcessResponse)

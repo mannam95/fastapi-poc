@@ -64,7 +64,7 @@ class RoleService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_roles(self, skip: int = 0, limit: int = 100) -> List[Role]:
+    async def get_roles(self, offset: int = 0, limit: int = 100) -> List[Role]:
         """
         Get a list of roles with pagination and eager loading of relationships.
 
@@ -72,7 +72,7 @@ class RoleService(BaseService):
         using SQLAlchemy's selectinload for efficient eager loading.
 
         Args:
-            skip: Number of records to skip for pagination
+            offset: Number of records to offset for pagination
             limit: Maximum number of records to return
 
         Returns:
@@ -82,13 +82,13 @@ class RoleService(BaseService):
         query = (
             select(Role)
             .options(selectinload(Role.processes), selectinload(Role.created_by))
-            .offset(skip)
+            .offset(offset)
             .limit(limit)
         )
         result = await self.session.execute(query)
 
         # Convert the result to a list of roles
-        roles = result.scalars().all()
+        roles = list(result.scalars().all())
 
         # return the roles
         return roles

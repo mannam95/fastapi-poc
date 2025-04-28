@@ -64,7 +64,7 @@ class RoleUpdate(BaseModel):
     process_ids: Optional[List[int]] = []
 
 
-class RoleRead(RoleBase):
+class RoleResponse(RoleBase):
     """
     Schema for reading role data.
     Provides a complete representation of a role including relationships

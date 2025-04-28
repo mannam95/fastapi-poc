@@ -5,7 +5,7 @@ from fastapi import APIRouter, status
 from app.domains.resource.resource_dependencies import ResourceServiceDep
 from app.domains.resource.resource_schemas import (
     ResourceCreate,
-    ResourceRead,
+    ResourceResponse,
     ResourceUpdate,
 )
 
@@ -14,7 +14,7 @@ router = APIRouter()
 # CRUD operations
 
 
-@router.post("/", response_model=ResourceRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
 async def create_resource(service: ResourceServiceDep, resource_in: ResourceCreate):
     """
     Create a new resource.
@@ -27,25 +27,25 @@ async def create_resource(service: ResourceServiceDep, resource_in: ResourceCrea
     return await service.create_resource(resource_in)
 
 
-@router.get("/", response_model=List[ResourceRead])
+@router.get("/", response_model=List[ResourceResponse])
 async def read_resources(
     service: ResourceServiceDep,
-    skip: int = 0,
+    offset: int = 0,
     limit: int = 100,
 ):
     """
     Get a list of resources with pagination.
 
     Args:
-        skip: Number of records to skip
+        offset: Number of records to offset
         limit: Maximum number of records to return
 
     Returns a list of resources with their details and process relationships.
     """
-    return await service.get_resources(skip, limit)
+    return await service.get_resources(offset, limit)
 
 
-@router.get("/{resource_id}", response_model=ResourceRead)
+@router.get("/{resource_id}", response_model=ResourceResponse)
 async def read_resource(
     resource_id: int,
     service: ResourceServiceDep,
@@ -61,7 +61,7 @@ async def read_resource(
     return await service.get_resource_by_id(resource_id)
 
 
-@router.put("/{resource_id}", response_model=ResourceRead)
+@router.put("/{resource_id}", response_model=ResourceResponse)
 async def update_resource(
     resource_id: int,
     resource_in: ResourceUpdate,

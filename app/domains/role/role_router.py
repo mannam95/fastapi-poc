@@ -6,12 +6,12 @@ from typing import List
 from fastapi import APIRouter, Query, status
 
 from app.domains.role.role_dependencies import RoleServiceDep
-from app.domains.role.role_schemas import RoleCreate, RoleRead, RoleUpdate
+from app.domains.role.role_schemas import RoleCreate, RoleResponse, RoleUpdate
 
 router = APIRouter()
 
 
-@router.post("/", response_model=RoleRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
 async def create_role(
     role_data: RoleCreate,
     service: RoleServiceDep,
@@ -27,25 +27,25 @@ async def create_role(
     return await service.create_role(role_data)
 
 
-@router.get("/", response_model=List[RoleRead])
+@router.get("/", response_model=List[RoleResponse])
 async def get_roles(
     service: RoleServiceDep,
-    skip: int = Query(0, ge=0, description="Skip the first N items"),
+    offset: int = Query(0, ge=0, description="Skip the first N items"),
     limit: int = Query(100, ge=1, le=1000, description="Limit the number of items returned"),
 ):
     """
     Get a list of roles with pagination.
 
     Args:
-        skip: Number of records to skip
+        offset: Number of records to offset
         limit: Maximum number of records to return
 
     Returns a list of roles with their details and process relationships.
     """
-    return await service.get_roles(offset=skip, limit=limit)
+    return await service.get_roles(offset=offset, limit=limit)
 
 
-@router.get("/{role_id}", response_model=RoleRead)
+@router.get("/{role_id}", response_model=RoleResponse)
 async def get_role(
     role_id: int,
     service: RoleServiceDep,
@@ -61,7 +61,7 @@ async def get_role(
     return await service.get_role_by_id(role_id)
 
 
-@router.put("/{role_id}", response_model=RoleRead)
+@router.put("/{role_id}", response_model=RoleResponse)
 async def update_role(
     role_id: int,
     role_data: RoleUpdate,

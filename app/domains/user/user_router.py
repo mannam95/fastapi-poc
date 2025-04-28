@@ -3,12 +3,12 @@ from typing import List
 from fastapi import APIRouter, status
 
 from app.domains.user.user_dependencies import UserServiceDep
-from app.domains.user.user_schemas import UserCreate, UserRead, UserUpdate
+from app.domains.user.user_schemas import UserCreate, UserResponse, UserUpdate
 
 router = APIRouter()
 
 
-@router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(service: UserServiceDep, user_in: UserCreate):
     """
     Create a new user.
@@ -21,25 +21,25 @@ async def create_user(service: UserServiceDep, user_in: UserCreate):
     return await service.create_user(user_in)
 
 
-@router.get("/", response_model=List[UserRead])
+@router.get("/", response_model=List[UserResponse])
 async def read_users(
     service: UserServiceDep,
-    skip: int = 0,
+    offset: int = 0,
     limit: int = 100,
 ):
     """
     Get a list of users with pagination.
 
     Args:
-        skip: Number of records to skip
+        offset: Number of records to offset
         limit: Maximum number of records to return
 
     Returns a list of users with their details.
     """
-    return await service.get_users(skip, limit)
+    return await service.get_users(offset, limit)
 
 
-@router.get("/{user_id}", response_model=UserRead)
+@router.get("/{user_id}", response_model=UserResponse)
 async def read_user(
     user_id: int,
     service: UserServiceDep,
@@ -54,7 +54,7 @@ async def read_user(
     return await service.get_user_by_id(user_id)
 
 
-@router.put("/{user_id}", response_model=UserRead)
+@router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: int,
     user_in: UserUpdate,

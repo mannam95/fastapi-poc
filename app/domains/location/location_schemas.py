@@ -53,7 +53,18 @@ class LocationCreate(LocationBase):
     process_ids: Optional[List[int]] = []
 
 
-class LocationRead(LocationBase):
+class LocationUpdate(BaseModel):
+    """
+    Schema for updating a location.
+    All fields are optional to support partial updates of attributes
+    and process relationships.
+    """
+
+    title: Optional[str] = None
+    process_ids: Optional[List[int]] = []
+
+
+class LocationResponse(LocationBase):
     """
     Schema for reading location data.
     Provides a complete representation of a location including relationships
@@ -68,14 +79,3 @@ class LocationRead(LocationBase):
 
     class Config:
         from_attributes = True
-
-
-class LocationUpdate(BaseModel):
-    """
-    Schema for updating a location.
-    All fields are optional to support partial updates of attributes
-    and process relationships.
-    """
-
-    title: Optional[str] = None
-    process_ids: Optional[List[int]] = []

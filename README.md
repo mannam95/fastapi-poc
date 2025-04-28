@@ -35,6 +35,8 @@ make up
 # API documentation at http://localhost:8000/docs
 ```
 
+- Note: The python dockerfile is a multi-stage build. The final image is built with the `python:3.11-slim` base image, which is smaller and more efficient for production use.
+
 ## Project Structure
 
 ```

@@ -66,7 +66,7 @@ class ResourceService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_resources(self, skip: int = 0, limit: int = 100) -> List[Resource]:
+    async def get_resources(self, offset: int = 0, limit: int = 100) -> List[Resource]:
         """
         Get a list of resources with pagination and eager loading of relationships.
 
@@ -74,7 +74,7 @@ class ResourceService(BaseService):
         using SQLAlchemy's selectinload for efficient eager loading.
 
         Args:
-            skip: Number of records to skip for pagination
+            offset: Number of records to offset for pagination
             limit: Maximum number of records to return
 
         Returns:
@@ -84,12 +84,12 @@ class ResourceService(BaseService):
         result = await self.session.execute(
             select(Resource)
             .options(selectinload(Resource.created_by), selectinload(Resource.processes))
-            .offset(skip)
+            .offset(offset)
             .limit(limit)
         )
 
         # Convert the result to a list of resources
-        resources = result.scalars().all()
+        resources = list(result.scalars().all())
 
         # return the resources
         return resources

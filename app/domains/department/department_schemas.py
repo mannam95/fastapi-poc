@@ -53,7 +53,18 @@ class DepartmentCreate(DepartmentBase):
     process_ids: Optional[List[int]] = []
 
 
-class DepartmentRead(DepartmentBase):
+class DepartmentUpdate(BaseModel):
+    """
+    Schema for updating a department.
+    All fields are optional to support partial updates of attributes
+    and process relationships.
+    """
+
+    title: Optional[str] = None
+    process_ids: Optional[List[int]] = []
+
+
+class DepartmentResponse(DepartmentBase):
     """
     Schema for reading department data.
     Provides a complete representation of a department including relationships
@@ -68,14 +79,3 @@ class DepartmentRead(DepartmentBase):
 
     class Config:
         from_attributes = True
-
-
-class DepartmentUpdate(BaseModel):
-    """
-    Schema for updating a department.
-    All fields are optional to support partial updates of attributes
-    and process relationships.
-    """
-
-    title: Optional[str] = None
-    process_ids: Optional[List[int]] = []

@@ -66,7 +66,7 @@ class DepartmentService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_departments(self, skip: int = 0, limit: int = 100) -> List[Department]:
+    async def get_departments(self, offset: int = 0, limit: int = 100) -> List[Department]:
         """
         Get a list of departments with pagination and eager loading of relationships.
 
@@ -74,7 +74,7 @@ class DepartmentService(BaseService):
         using SQLAlchemy's selectinload for efficient eager loading.
 
         Args:
-            skip: Number of records to skip for pagination
+            offset: Number of records to offset for pagination
             limit: Maximum number of records to return
 
         Returns:
@@ -84,12 +84,12 @@ class DepartmentService(BaseService):
         result = await self.session.execute(
             select(Department)
             .options(selectinload(Department.created_by), selectinload(Department.processes))
-            .offset(skip)
+            .offset(offset)
             .limit(limit)
         )
 
         # Convert the result to a list of departments
-        departments = result.scalars().all()
+        departments = list(result.scalars().all())
 
         # return the departments
         return departments

@@ -31,7 +31,7 @@ class UserUpdate(BaseModel):
     title: Optional[str] = None
 
 
-class UserRead(UserBase):
+class UserResponse(UserBase):
     """
     Schema for reading user data.
     Provides a complete representation of a user for API responses,

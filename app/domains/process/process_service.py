@@ -108,7 +108,7 @@ class ProcessService(BaseService):
         )
 
         # Convert the result to a list of processes
-        processes = result.scalars().all()
+        processes = list(result.scalars().all())
 
         # return the processes
         return processes

@@ -66,7 +66,7 @@ class LocationService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_locations(self, skip: int = 0, limit: int = 100) -> List[Location]:
+    async def get_locations(self, offset: int = 0, limit: int = 100) -> List[Location]:
         """
         Get a list of locations with pagination and eager loading of relationships.
 
@@ -74,7 +74,7 @@ class LocationService(BaseService):
         using SQLAlchemy's selectinload for efficient eager loading.
 
         Args:
-            skip: Number of records to skip for pagination
+            offset: Number of records to offset for pagination
             limit: Maximum number of records to return
 
         Returns:
@@ -84,12 +84,12 @@ class LocationService(BaseService):
         result = await self.session.execute(
             select(Location)
             .options(selectinload(Location.created_by), selectinload(Location.processes))
-            .offset(skip)
+            .offset(offset)
             .limit(limit)
         )
 
         # Convert the result to a list of locations
-        locations = result.scalars().all()
+        locations = list(result.scalars().all())
 
         # return the locations
         return locations

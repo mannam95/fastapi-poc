@@ -46,7 +46,7 @@ class TestUserService:
         assert len(limited_users) <= 1
 
         # Test pagination with skip
-        skip_users = await self.service.get_users(skip=1, limit=10)
+        skip_users = await self.service.get_users(offset=1, limit=10)
         if len(users) > 1:
             # If we have more than one user, the first user with skip should differ
             assert skip_users[0].id != users[0].id

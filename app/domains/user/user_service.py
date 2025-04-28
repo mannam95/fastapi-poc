@@ -55,22 +55,22 @@ class UserService:
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_users(self, skip: int = 0, limit: int = 100) -> List[User]:
+    async def get_users(self, offset: int = 0, limit: int = 100) -> List[User]:
         """
         Get a list of users with pagination.
 
         Args:
-            skip: Number of records to skip (for pagination)
+            offset: Number of records to offset (for pagination)
             limit: Maximum number of records to return
 
         Returns:
             List[User]: List of user objects
         """
         # Get the users with pagination
-        result = await self.session.execute(select(User).offset(skip).limit(limit))
+        result = await self.session.execute(select(User).offset(offset).limit(limit))
 
         # Convert the result to a list of users
-        users = result.scalars().all()
+        users = list(result.scalars().all())
 
         # Return the users
         return users
