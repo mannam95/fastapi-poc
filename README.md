@@ -35,7 +35,6 @@ make up
 # API documentation at http://localhost:8000/docs
 ```
 
-
 ## Project Structure
 
 ```
@@ -89,6 +88,23 @@ make format
 # Run linters
 make lint
 ```
+
+## Development Setup
+
+### VSCode Setup
+
+This project includes VSCode configuration files in the `.vscode` directory to provide a consistent development experience:
+
+1. Install the recommended extensions when prompted by VSCode
+2. Use the built-in debugger configurations:
+   - Start the FastAPI server by running `make up` in the terminal
+   - "Attach FastAPI Debugger": Can attach to a running FastAPI server
+
+The configuration includes:
+
+- Black formatter on save
+- Flake8 and mypy linting
+- additional settings for Python and FastAPI development
 
 ## Working with Async SQLAlchemy
 
