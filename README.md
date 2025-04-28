@@ -52,6 +52,8 @@ app/
 └── models/             # SQLAlchemy model imports
 ```
 
+For detailed architecture and design decisions, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Common Tasks
 
 ### Database Migrations (TODO)
