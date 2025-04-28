@@ -1,3 +1,8 @@
+"""
+Main API router module that aggregates all domain-specific routers.
+This module centralizes routing configuration for the entire API.
+"""
+
 from fastapi import APIRouter
 
 from app.domains.department.department_router import router as department_router

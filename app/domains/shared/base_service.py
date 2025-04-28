@@ -5,16 +5,18 @@ This module provides a base service class that other domain services can inherit
 It includes common functionality like relationship management and database operations.
 """
 
-from typing import Any, List, Type, TypeVar, Protocol
+from typing import Any, List, Protocol, Type, TypeVar
 
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.collections import InstrumentedList
 
+
 # Define a protocol for models with ID
 class HasID(Protocol):
     id: Any
+
 
 # Type variable for SQLAlchemy models with ID constraint
 ModelType = TypeVar("ModelType", bound=HasID)

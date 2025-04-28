@@ -10,7 +10,14 @@ router = APIRouter()
 
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def create_user(service: UserServiceDep, user_in: UserCreate):
-    """Create a new user"""
+    """
+    Create a new user.
+
+    Creates a user with the specified title.
+    Users serve as creators for other entities in the system.
+
+    Returns the newly created user with all details.
+    """
     return await service.create_user(user_in)
 
 
@@ -20,7 +27,15 @@ async def read_users(
     skip: int = 0,
     limit: int = 100,
 ):
-    """Get list of users"""
+    """
+    Get a list of users with pagination.
+
+    Args:
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+
+    Returns a list of users with their details.
+    """
     return await service.get_users(skip, limit)
 
 
@@ -29,7 +44,13 @@ async def read_user(
     user_id: int,
     service: UserServiceDep,
 ):
-    """Get a single user by ID"""
+    """
+    Get a single user by ID.
+
+    Retrieves detailed information about a specific user.
+
+    Raises 404 if user not found.
+    """
     return await service.get_user_by_id(user_id)
 
 
@@ -39,7 +60,15 @@ async def update_user(
     user_in: UserUpdate,
     service: UserServiceDep,
 ):
-    """Update an existing user"""
+    """
+    Update an existing user.
+
+    Updates user attributes.
+    Supports partial updates (only specified fields will be updated).
+
+    Returns the updated user with all details.
+    Raises 404 if user not found.
+    """
     return await service.update_user(user_id, user_in)
 
 
@@ -48,6 +77,14 @@ async def delete_user(
     user_id: int,
     service: UserServiceDep,
 ):
-    """Delete a user"""
+    """
+    Delete a user.
+
+    Completely removes a user from the system.
+    This operation cannot be undone.
+
+    Returns a success message.
+    Raises 404 if user not found.
+    """
     await service.delete_user(user_id)
     return {"message": "User deleted successfully"}

@@ -1,7 +1,7 @@
 # app/domains/resource/resource_service.py
 # This file contains the business logic for the resource domain
 
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -26,7 +26,22 @@ class ResourceService(BaseService):
         super().__init__(session)
 
     async def create_resource(self, resource_data: ResourceCreate) -> Resource:
-        """Create a new resource"""
+        """
+        Create a new resource with optional process relationships.
+
+        Creates a resource record and establishes relationships with
+        processes based on provided IDs.
+
+        Args:
+            resource_data: Data for creating the resource, including title,
+                           creator ID, and optional process relationship IDs
+
+        Returns:
+            Resource: The newly created resource with all relationships loaded
+
+        Raises:
+            HTTPException: If there's a database error or related entities don't exist
+        """
         try:
             # Create new Resource instance from input data
             db_resource = Resource(
@@ -51,13 +66,25 @@ class ResourceService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_resources(self, offset: int = 0, limit: int = 100) -> List[Resource]:
-        """Get a list of resources with pagination and associated data"""
+    async def get_resources(self, skip: int = 0, limit: int = 100) -> List[Resource]:
+        """
+        Get a list of resources with pagination and eager loading of relationships.
+
+        Retrieves resources with their associated creator and process relationships
+        using SQLAlchemy's selectinload for efficient eager loading.
+
+        Args:
+            skip: Number of records to skip for pagination
+            limit: Maximum number of records to return
+
+        Returns:
+            List[Resource]: List of resource objects with relationships loaded
+        """
         # Get the resources with associated data
         result = await self.session.execute(
             select(Resource)
             .options(selectinload(Resource.created_by), selectinload(Resource.processes))
-            .offset(offset)
+            .offset(skip)
             .limit(limit)
         )
 
@@ -68,7 +95,21 @@ class ResourceService(BaseService):
         return resources
 
     async def get_resource_by_id(self, resource_id: int) -> Resource:
-        """Get a single resource by ID with associated data"""
+        """
+        Get a single resource by ID with all relationships loaded.
+
+        Retrieves a specific resource with its associated creator and process
+        relationships using efficient eager loading.
+
+        Args:
+            resource_id: Database ID of the resource to retrieve
+
+        Returns:
+            Resource: The requested resource with all relationships loaded
+
+        Raises:
+            HTTPException: If resource not found (404)
+        """
         # Get the resource by ID with associated data
         result = await self.session.execute(
             select(Resource)
@@ -85,7 +126,23 @@ class ResourceService(BaseService):
         return resource
 
     async def update_resource(self, resource_id: int, resource_data: ResourceUpdate) -> Resource:
-        """Update an existing resource"""
+        """
+        Update an existing resource and its relationships.
+
+        Updates resource attributes and its relationships with processes.
+        Only provided fields will be updated.
+
+        Args:
+            resource_id: Database ID of the resource to update
+            resource_data: Data for updating the resource, including fields to
+                           update and process relationship IDs
+
+        Returns:
+            Resource: The updated resource with all relationships
+
+        Raises:
+            HTTPException: If resource not found (404) or database error (500)
+        """
         # Get the resource by ID
         resource = await self.session.get(Resource, resource_id)
         if not resource:
@@ -113,7 +170,17 @@ class ResourceService(BaseService):
             raise HTTPException(status_code=500, detail=str(e))
 
     async def delete_resource(self, resource_id: int) -> None:
-        """Delete a resource and clear all of its relationships"""
+        """
+        Delete a resource and clear all of its relationships.
+
+        Removes all relationships to processes before deleting the resource itself.
+
+        Args:
+            resource_id: Database ID of the resource to delete
+
+        Raises:
+            HTTPException: If resource not found (404) or database error (500)
+        """
         # Get the resource by ID
         resource = await self.session.get(Resource, resource_id)
         if not resource:
@@ -131,10 +198,15 @@ class ResourceService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def _update_relationships(self, resource: Resource, process_ids: List[int]) -> None:
-        """Update the many-to-many relationships of a resource
+    async def _update_relationships(
+        self, resource: Resource, process_ids: Optional[List[int]]
+    ) -> None:
+        """
+        Update the many-to-many relationships of a resource.
 
         This method handles adding and removing related entities based on the provided IDs.
+        It uses the base service's update_many_to_many_relationship method to efficiently
+        update each relationship without completely replacing collections.
 
         Args:
             resource: The resource to update

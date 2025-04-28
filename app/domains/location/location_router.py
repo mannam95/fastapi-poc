@@ -16,18 +16,33 @@ router = APIRouter()
 
 @router.post("/", response_model=LocationRead, status_code=status.HTTP_201_CREATED)
 async def create_location(service: LocationServiceDep, location_in: LocationCreate):
-    """Create a new location"""
+    """
+    Create a new location.
+
+    Creates a location with specified attributes and optional
+    associations to processes.
+
+    Returns the newly created location with all details.
+    """
     return await service.create_location(location_in)
 
 
 @router.get("/", response_model=List[LocationRead])
 async def read_locations(
     service: LocationServiceDep,
-    offset: int = 0,
+    skip: int = 0,
     limit: int = 100,
 ):
-    """Get list of locations"""
-    return await service.get_locations(offset, limit)
+    """
+    Get a list of locations with pagination.
+
+    Args:
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+
+    Returns a list of locations with their details and process relationships.
+    """
+    return await service.get_locations(skip, limit)
 
 
 @router.get("/{location_id}", response_model=LocationRead)
@@ -35,7 +50,14 @@ async def read_location(
     location_id: int,
     service: LocationServiceDep,
 ):
-    """Get a single location by ID with all relationships loaded"""
+    """
+    Get a single location by ID.
+
+    Retrieves detailed information about a specific location,
+    including its creator and associated processes.
+
+    Raises 404 if location not found.
+    """
     return await service.get_location_by_id(location_id)
 
 
@@ -45,7 +67,15 @@ async def update_location(
     location_in: LocationUpdate,
     service: LocationServiceDep,
 ):
-    """Update an existing location"""
+    """
+    Update an existing location.
+
+    Updates location attributes and/or process relationships.
+    Supports partial updates (only specified fields will be updated).
+
+    Returns the updated location with all details.
+    Raises 404 if location not found.
+    """
     return await service.update_location(location_id, location_in)
 
 
@@ -54,6 +84,14 @@ async def delete_location(
     location_id: int,
     service: LocationServiceDep,
 ):
-    """Delete a location"""
+    """
+    Delete a location.
+
+    Completely removes a location and its relationships.
+    This operation cannot be undone.
+
+    Returns a success message.
+    Raises 404 if location not found.
+    """
     await service.delete_location(location_id)
     return {"message": "Location deleted successfully"}

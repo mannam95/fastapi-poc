@@ -14,7 +14,13 @@ department_process = Table(
 
 
 class Department(Base):
-    """Department model"""
+    """
+    Department model representing an organizational department.
+
+    A department can be associated with multiple processes through a
+    many-to-many relationship. Each department tracks who created it and when.
+    This model is used for organizing and categorizing processes by department.
+    """
 
     __tablename__ = "departments"
 

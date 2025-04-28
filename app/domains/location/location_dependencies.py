@@ -8,19 +8,20 @@ from app.domains.location.location_service import LocationService
 
 def get_location_service(session: DBSessionDep) -> LocationService:
     """
-    Dependency provider for LocationService
+    Dependency provider for LocationService.
 
-    This function creates a new instance of LocationService with the provided database session.
-    It's used by FastAPI's dependency injection system to inject the service into route handlers.
+    Creates a new instance of LocationService with the provided database session.
+    This function is used by FastAPI's dependency injection system to
+    make the service available to route handlers.
 
     Args:
         session: SQLAlchemy async session for database operations
 
     Returns:
-        An instance of LocationService with the session injected
+        LocationService: An instance of LocationService with the session injected
     """
     return LocationService(session)
 
 
-# Type annotation for convenience
+# Type annotation for convenience in route function signatures
 LocationServiceDep = Annotated[LocationService, Depends(get_location_service)]

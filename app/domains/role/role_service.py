@@ -1,7 +1,7 @@
 # app/domains/role/role_service.py
 # This file contains the service layer for the role domain
 
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -26,7 +26,22 @@ class RoleService(BaseService):
         super().__init__(session)
 
     async def create_role(self, role_data: RoleCreate) -> Role:
-        """Create a new role"""
+        """
+        Create a new role with optional process relationships.
+
+        Creates a role record and establishes relationships with
+        processes based on provided IDs.
+
+        Args:
+            role_data: Data for creating the role, including title,
+                       creator ID, and optional process relationship IDs
+
+        Returns:
+            Role: The newly created role with all relationships loaded
+
+        Raises:
+            HTTPException: If there's a database error or related entities don't exist
+        """
         try:
             # Create a new role
             role = Role(title=role_data.title, created_by_id=role_data.created_by_id)
@@ -49,13 +64,25 @@ class RoleService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_roles(self, offset: int = 0, limit: int = 100) -> List[Role]:
-        """Get a list of roles with pagination and associated data"""
+    async def get_roles(self, skip: int = 0, limit: int = 100) -> List[Role]:
+        """
+        Get a list of roles with pagination and eager loading of relationships.
+
+        Retrieves roles with their associated creator and process relationships
+        using SQLAlchemy's selectinload for efficient eager loading.
+
+        Args:
+            skip: Number of records to skip for pagination
+            limit: Maximum number of records to return
+
+        Returns:
+            List[Role]: List of role objects with relationships loaded
+        """
         # Get the roles with associated data
         query = (
             select(Role)
             .options(selectinload(Role.processes), selectinload(Role.created_by))
-            .offset(offset)
+            .offset(skip)
             .limit(limit)
         )
         result = await self.session.execute(query)
@@ -67,7 +94,21 @@ class RoleService(BaseService):
         return roles
 
     async def get_role_by_id(self, role_id: int) -> Role:
-        """Get a role by its ID with associated data"""
+        """
+        Get a single role by ID with all relationships loaded.
+
+        Retrieves a specific role with its associated creator and process
+        relationships using efficient eager loading.
+
+        Args:
+            role_id: Database ID of the role to retrieve
+
+        Returns:
+            Role: The requested role with all relationships loaded
+
+        Raises:
+            HTTPException: If role not found (404)
+        """
         # Get the role by ID with associated data
         query = (
             select(Role)
@@ -85,7 +126,23 @@ class RoleService(BaseService):
         return role
 
     async def update_role(self, role_id: int, role_data: RoleUpdate) -> Role:
-        """Update an existing role"""
+        """
+        Update an existing role and its relationships.
+
+        Updates role attributes and its relationships with processes.
+        Only provided fields will be updated.
+
+        Args:
+            role_id: Database ID of the role to update
+            role_data: Data for updating the role, including fields to
+                       update and process relationship IDs
+
+        Returns:
+            Role: The updated role with all relationships
+
+        Raises:
+            HTTPException: If role not found (404) or database error (500)
+        """
         # Get the role by ID
         role = await self.session.get(Role, role_id)
         if not role:
@@ -114,7 +171,17 @@ class RoleService(BaseService):
             raise HTTPException(status_code=500, detail=str(e))
 
     async def delete_role(self, role_id: int) -> None:
-        """Delete a role by its ID and clear all of its relationships"""
+        """
+        Delete a role and clear all of its relationships.
+
+        Removes all relationships to processes before deleting the role itself.
+
+        Args:
+            role_id: Database ID of the role to delete
+
+        Raises:
+            HTTPException: If role not found (404) or database error (500)
+        """
         # Get the role by ID
         role = await self.session.get(Role, role_id)
         if not role:
@@ -133,10 +200,13 @@ class RoleService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def _update_relationships(self, role: Role, process_ids: List[int]) -> None:
-        """Update the many-to-many relationships of a role
+    async def _update_relationships(self, role: Role, process_ids: Optional[List[int]]) -> None:
+        """
+        Update the many-to-many relationships of a role.
 
         This method handles adding and removing related entities based on the provided IDs.
+        It uses the base service's update_many_to_many_relationship method to efficiently
+        update each relationship without completely replacing collections.
 
         Args:
             role: The role to update

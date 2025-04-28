@@ -14,7 +14,14 @@ resource_process = Table(
 
 
 class Resource(Base):
-    """Resource model"""
+    """
+    Resource model representing assets or materials used in processes.
+
+    A resource can be associated with multiple processes through a
+    many-to-many relationship. Each resource tracks who created it and when.
+    Resources might represent equipment, materials, or other items needed
+    for business processes.
+    """
 
     __tablename__ = "resources"
 

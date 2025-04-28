@@ -5,7 +5,13 @@ from app.core.database import Base
 
 
 class Process(Base):
-    """Process model"""
+    """
+    Process model representing a business process in the system.
+
+    A process can be associated with multiple departments, locations,
+    resources, and roles through many-to-many relationships.
+    Each process tracks who created it and when.
+    """
 
     __tablename__ = "process"
 

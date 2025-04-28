@@ -14,7 +14,14 @@ location_process = Table(
 
 
 class Location(Base):
-    """Location model"""
+    """
+    Location model representing physical or virtual places for processes.
+
+    A location can be associated with multiple processes through a
+    many-to-many relationship. Each location tracks who created it and when.
+    Locations could represent physical facilities, virtual environments,
+    or other spaces where business processes occur.
+    """
 
     __tablename__ = "locations"
 

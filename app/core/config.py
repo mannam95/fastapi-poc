@@ -5,6 +5,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """
+    Application settings and configuration.
+    Loads settings from environment variables and .env file.
+    Provides type-validated configuration for the application.
+    """
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
     API_V1_STR: str = "/api/v1"
@@ -27,12 +33,15 @@ class Settings(BaseSettings):
 
     @field_validator("POSTGRES_PORT")
     def validate_postgres_port(cls, v):
-        # Convert string port to integer
+        """Convert string port to integer for validation"""
         return int(v)
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
-        """Return the database URL as a string for SQLAlchemy"""
+        """
+        Return the database URL as a string for SQLAlchemy.
+        Constructs a connection string from component parts.
+        """
         db_uri = PostgresDsn.build(
             scheme="postgresql+asyncpg",  # Using asyncpg driver for async SQLAlchemy
             username=self.POSTGRES_USER,
@@ -45,18 +54,24 @@ class Settings(BaseSettings):
 
     @field_validator("DATABASE_URI", mode="before")
     def assemble_db_connection(cls, v: Union[str, None], values) -> Union[str, None]:
+        """
+        Validate and construct the database URI if not provided directly.
+        If a string is provided, it's returned as is; otherwise, built from components.
+        """
         if isinstance(v, str):
             return v
-        
+
         # Convert PostgresDsn to string to match the return type
-        return str(PostgresDsn.build(
-            scheme="postgresql+asyncpg",  # Using asyncpg driver for async SQLAlchemy
-            username=values.data.get("POSTGRES_USER"),
-            password=values.data.get("POSTGRES_PASSWORD"),
-            host=values.data.get("POSTGRES_SERVER"),
-            port=values.data.get("POSTGRES_PORT"),
-            path=f"{values.data.get('POSTGRES_DB') or ''}",
-        ))
+        return str(
+            PostgresDsn.build(
+                scheme="postgresql+asyncpg",  # Using asyncpg driver for async SQLAlchemy
+                username=values.data.get("POSTGRES_USER"),
+                password=values.data.get("POSTGRES_PASSWORD"),
+                host=values.data.get("POSTGRES_SERVER"),
+                port=values.data.get("POSTGRES_PORT"),
+                path=f"{values.data.get('POSTGRES_DB') or ''}",
+            )
+        )
 
 
 settings = Settings()

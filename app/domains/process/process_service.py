@@ -29,7 +29,22 @@ class ProcessService(BaseService):
         super().__init__(session)
 
     async def create_process(self, process_data: ProcessCreate) -> Process:
-        """Create a new process with optional related entities"""
+        """
+        Create a new process with optional related entities.
+
+        Creates a process record and establishes relationships with departments,
+        locations, resources, and roles based on provided IDs.
+
+        Args:
+            process_data: Data for creating the process, including title, description,
+                          creator ID, and optional relationship IDs
+
+        Returns:
+            Process: The newly created process with all relationships loaded
+
+        Raises:
+            HTTPException: If there's a database error or related entities don't exist
+        """
         try:
             # Create new Process instance from input data
             db_process = Process(
@@ -64,7 +79,20 @@ class ProcessService(BaseService):
             raise HTTPException(status_code=500, detail=str(e))
 
     async def get_processes(self, offset: int = 0, limit: int = 100) -> List[Process]:
-        """Get a list of processes with pagination and associated user data"""
+        """
+        Get a list of processes with pagination and eager loading of relationships.
+
+        Retrieves processes with their associated creator and related entities
+        (departments, locations, resources, roles) using SQLAlchemy's selectinload
+        for efficient eager loading.
+
+        Args:
+            offset: Number of records to skip for pagination
+            limit: Maximum number of records to return
+
+        Returns:
+            List[Process]: List of process objects with relationships loaded
+        """
         # Get the processes with associated data
         result = await self.session.execute(
             select(Process)
@@ -86,7 +114,21 @@ class ProcessService(BaseService):
         return processes
 
     async def get_process_by_id(self, process_id: int) -> Process:
-        """Get a single process by ID with associated user data"""
+        """
+        Get a single process by ID with all relationships loaded.
+
+        Retrieves a specific process with its associated creator and related entities
+        (departments, locations, resources, roles) using efficient eager loading.
+
+        Args:
+            process_id: Database ID of the process to retrieve
+
+        Returns:
+            Process: The requested process with all relationships loaded
+
+        Raises:
+            HTTPException: If process not found (404)
+        """
         # Get the process by ID with associated data
         result = await self.session.execute(
             select(Process)
@@ -109,7 +151,23 @@ class ProcessService(BaseService):
         return process
 
     async def update_process(self, process_id: int, process_data: ProcessUpdate) -> Process:
-        """Update an existing process"""
+        """
+        Update an existing process and its relationships.
+
+        Updates process attributes and its relationships with departments,
+        locations, resources, and roles. Only provided fields will be updated.
+
+        Args:
+            process_id: Database ID of the process to update
+            process_data: Data for updating the process, including fields to
+                          update and relationship IDs
+
+        Returns:
+            Process: The updated process with all relationships
+
+        Raises:
+            HTTPException: If process not found (404) or database error (500)
+        """
         # Get the process by ID
         process = await self.session.get(Process, process_id)
         if not process:
@@ -146,7 +204,18 @@ class ProcessService(BaseService):
             raise HTTPException(status_code=500, detail=str(e))
 
     async def delete_process(self, process_id: int) -> None:
-        """Delete a process and clear all of its relationships"""
+        """
+        Delete a process and clear all of its relationships.
+
+        Removes all relationships to departments, locations, resources,
+        and roles before deleting the process itself.
+
+        Args:
+            process_id: Database ID of the process to delete
+
+        Raises:
+            HTTPException: If process not found (404) or database error (500)
+        """
         # Get the process by ID
         process = await self.session.get(Process, process_id)
         if not process:
@@ -175,9 +244,12 @@ class ProcessService(BaseService):
         resource_ids: Optional[List[int]] = None,
         role_ids: Optional[List[int]] = None,
     ) -> None:
-        """Update the many-to-many relationships of a process
+        """
+        Update the many-to-many relationships of a process.
 
         This method handles adding and removing related entities based on the provided IDs.
+        It uses the base service's update_many_to_many_relationship method to efficiently
+        update each relationship without completely replacing collections.
 
         Args:
             process: The process to update

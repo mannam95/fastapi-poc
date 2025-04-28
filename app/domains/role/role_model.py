@@ -14,7 +14,14 @@ role_process = Table(
 
 
 class Role(Base):
-    """Role model"""
+    """
+    Role model representing job functions or responsibilities.
+
+    A role can be associated with multiple processes through a
+    many-to-many relationship. Each role tracks who created it and when.
+    Roles represent job positions, responsibilities, or functions that
+    are involved in executing business processes.
+    """
 
     __tablename__ = "roles"
 

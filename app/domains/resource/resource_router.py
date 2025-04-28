@@ -16,18 +16,33 @@ router = APIRouter()
 
 @router.post("/", response_model=ResourceRead, status_code=status.HTTP_201_CREATED)
 async def create_resource(service: ResourceServiceDep, resource_in: ResourceCreate):
-    """Create a new resource"""
+    """
+    Create a new resource.
+
+    Creates a resource with specified attributes and optional
+    associations to processes.
+
+    Returns the newly created resource with all details.
+    """
     return await service.create_resource(resource_in)
 
 
 @router.get("/", response_model=List[ResourceRead])
 async def read_resources(
     service: ResourceServiceDep,
-    offset: int = 0,
+    skip: int = 0,
     limit: int = 100,
 ):
-    """Get list of resources"""
-    return await service.get_resources(offset, limit)
+    """
+    Get a list of resources with pagination.
+
+    Args:
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+
+    Returns a list of resources with their details and process relationships.
+    """
+    return await service.get_resources(skip, limit)
 
 
 @router.get("/{resource_id}", response_model=ResourceRead)
@@ -35,7 +50,14 @@ async def read_resource(
     resource_id: int,
     service: ResourceServiceDep,
 ):
-    """Get a single resource by ID with all relationships loaded"""
+    """
+    Get a single resource by ID.
+
+    Retrieves detailed information about a specific resource,
+    including its creator and associated processes.
+
+    Raises 404 if resource not found.
+    """
     return await service.get_resource_by_id(resource_id)
 
 
@@ -45,7 +67,15 @@ async def update_resource(
     resource_in: ResourceUpdate,
     service: ResourceServiceDep,
 ):
-    """Update an existing resource"""
+    """
+    Update an existing resource.
+
+    Updates resource attributes and/or process relationships.
+    Supports partial updates (only specified fields will be updated).
+
+    Returns the updated resource with all details.
+    Raises 404 if resource not found.
+    """
     return await service.update_resource(resource_id, resource_in)
 
 
@@ -54,6 +84,14 @@ async def delete_resource(
     resource_id: int,
     service: ResourceServiceDep,
 ):
-    """Delete a resource"""
+    """
+    Delete a resource.
+
+    Completely removes a resource and its relationships.
+    This operation cannot be undone.
+
+    Returns a success message.
+    Raises 404 if resource not found.
+    """
     await service.delete_resource(resource_id)
     return {"message": "Resource deleted successfully"}

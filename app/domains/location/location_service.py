@@ -1,7 +1,7 @@
 # app/domains/location/location_service.py
 # This file contains the business logic for the location domain
 
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -26,7 +26,22 @@ class LocationService(BaseService):
         super().__init__(session)
 
     async def create_location(self, location_data: LocationCreate) -> Location:
-        """Create a new location"""
+        """
+        Create a new location with optional process relationships.
+
+        Creates a location record and establishes relationships with
+        processes based on provided IDs.
+
+        Args:
+            location_data: Data for creating the location, including title,
+                           creator ID, and optional process relationship IDs
+
+        Returns:
+            Location: The newly created location with all relationships loaded
+
+        Raises:
+            HTTPException: If there's a database error or related entities don't exist
+        """
         try:
             # Create new Location instance from input data
             db_location = Location(
@@ -51,13 +66,25 @@ class LocationService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_locations(self, offset: int = 0, limit: int = 100) -> List[Location]:
-        """Get a list of locations with pagination and associated data"""
+    async def get_locations(self, skip: int = 0, limit: int = 100) -> List[Location]:
+        """
+        Get a list of locations with pagination and eager loading of relationships.
+
+        Retrieves locations with their associated creator and process relationships
+        using SQLAlchemy's selectinload for efficient eager loading.
+
+        Args:
+            skip: Number of records to skip for pagination
+            limit: Maximum number of records to return
+
+        Returns:
+            List[Location]: List of location objects with relationships loaded
+        """
         # Get the locations with associated data
         result = await self.session.execute(
             select(Location)
             .options(selectinload(Location.created_by), selectinload(Location.processes))
-            .offset(offset)
+            .offset(skip)
             .limit(limit)
         )
 
@@ -68,7 +95,21 @@ class LocationService(BaseService):
         return locations
 
     async def get_location_by_id(self, location_id: int) -> Location:
-        """Get a single location by ID with associated data"""
+        """
+        Get a single location by ID with all relationships loaded.
+
+        Retrieves a specific location with its associated creator and process
+        relationships using efficient eager loading.
+
+        Args:
+            location_id: Database ID of the location to retrieve
+
+        Returns:
+            Location: The requested location with all relationships loaded
+
+        Raises:
+            HTTPException: If location not found (404)
+        """
         # Get the location by ID with associated data
         result = await self.session.execute(
             select(Location)
@@ -85,7 +126,23 @@ class LocationService(BaseService):
         return location
 
     async def update_location(self, location_id: int, location_data: LocationUpdate) -> Location:
-        """Update an existing location"""
+        """
+        Update an existing location and its relationships.
+
+        Updates location attributes and its relationships with processes.
+        Only provided fields will be updated.
+
+        Args:
+            location_id: Database ID of the location to update
+            location_data: Data for updating the location, including fields to
+                           update and process relationship IDs
+
+        Returns:
+            Location: The updated location with all relationships
+
+        Raises:
+            HTTPException: If location not found (404) or database error (500)
+        """
         # Get the location by ID
         location = await self.session.get(Location, location_id)
         if not location:
@@ -113,7 +170,17 @@ class LocationService(BaseService):
             raise HTTPException(status_code=500, detail=str(e))
 
     async def delete_location(self, location_id: int) -> None:
-        """Delete a location and clear all of its relationships"""
+        """
+        Delete a location and clear all of its relationships.
+
+        Removes all relationships to processes before deleting the location itself.
+
+        Args:
+            location_id: Database ID of the location to delete
+
+        Raises:
+            HTTPException: If location not found (404) or database error (500)
+        """
         # Get the location by ID
         location = await self.session.get(Location, location_id)
         if not location:
@@ -131,10 +198,15 @@ class LocationService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def _update_relationships(self, location: Location, process_ids: List[int]) -> None:
-        """Update the many-to-many relationships of a location
+    async def _update_relationships(
+        self, location: Location, process_ids: Optional[List[int]]
+    ) -> None:
+        """
+        Update the many-to-many relationships of a location.
 
         This method handles adding and removing related entities based on the provided IDs.
+        It uses the base service's update_many_to_many_relationship method to efficiently
+        update each relationship without completely replacing collections.
 
         Args:
             location: The location to update

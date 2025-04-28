@@ -6,6 +6,11 @@ from pydantic import BaseModel
 
 # Nested schema for simplified user info
 class UserInfo(BaseModel):
+    """
+    Simplified user information schema used in nested responses.
+    Contains only essential user attributes for display purposes.
+    """
+
     id: int
     title: str
     created_at: datetime
@@ -16,6 +21,11 @@ class UserInfo(BaseModel):
 
 # Simplified schemas for related entities
 class DepartmentInfo(BaseModel):
+    """
+    Simplified department information for use in nested responses.
+    Contains only the essential department attributes.
+    """
+
     id: int
     title: str
 
@@ -24,6 +34,11 @@ class DepartmentInfo(BaseModel):
 
 
 class LocationInfo(BaseModel):
+    """
+    Simplified location information for use in nested responses.
+    Contains only the essential location attributes.
+    """
+
     id: int
     title: str
 
@@ -32,6 +47,11 @@ class LocationInfo(BaseModel):
 
 
 class ResourceInfo(BaseModel):
+    """
+    Simplified resource information for use in nested responses.
+    Contains only the essential resource attributes.
+    """
+
     id: int
     title: str
 
@@ -40,6 +60,11 @@ class ResourceInfo(BaseModel):
 
 
 class RoleInfo(BaseModel):
+    """
+    Simplified role information for use in nested responses.
+    Contains only the essential role attributes.
+    """
+
     id: int
     title: str
 
@@ -48,6 +73,11 @@ class RoleInfo(BaseModel):
 
 
 class ProcessCreate(BaseModel):
+    """
+    Schema for creating a new process.
+    Includes required fields and optional relationships to other entities.
+    """
+
     title: str
     description: Optional[str] = None
     created_by_id: int
@@ -61,6 +91,11 @@ class ProcessCreate(BaseModel):
 
 
 class ProcessUpdate(BaseModel):
+    """
+    Schema for updating an existing process.
+    All fields are optional to support partial updates.
+    """
+
     title: Optional[str] = None
     description: Optional[str] = None
     department_ids: Optional[List[int]] = []
@@ -73,6 +108,11 @@ class ProcessUpdate(BaseModel):
 
 
 class ProcessResponse(BaseModel):
+    """
+    Schema for process data in API responses.
+    Includes full process details with nested related entities.
+    """
+
     id: int
     title: str
     description: Optional[str] = None

@@ -8,19 +8,20 @@ from app.domains.process.process_service import ProcessService
 
 def get_process_service(session: DBSessionDep) -> ProcessService:
     """
-    Dependency provider for ProcessService
+    Dependency provider for ProcessService.
 
-    This function creates a new instance of ProcessService with the provided database session.
-    It's used by FastAPI's dependency injection system to inject the service into route handlers.
+    Creates a new instance of ProcessService with the provided database session.
+    This function is used by FastAPI's dependency injection system to
+    make the service available to route handlers.
 
     Args:
         session: SQLAlchemy async session for database operations
 
     Returns:
-        An instance of ProcessService with the session injected
+        ProcessService: An instance of ProcessService with the session injected
     """
     return ProcessService(session)
 
 
-# Type annotation for convenience
+# Type annotation for convenience in route function signatures
 ProcessServiceDep = Annotated[ProcessService, Depends(get_process_service)]

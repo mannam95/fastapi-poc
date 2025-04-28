@@ -5,7 +5,13 @@ from app.core.database import Base
 
 
 class User(Base):
-    """User model"""
+    """
+    User model representing system users who can create and manage entities.
+
+    Users are the basic actors in the system and serve as creators for other entities
+    (processes, departments, locations, resources, and roles). Each user has a title
+    and creation timestamp. The relationships track all entities created by this user.
+    """
 
     __tablename__ = "users"
 

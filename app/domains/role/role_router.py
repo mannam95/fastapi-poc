@@ -16,18 +16,33 @@ async def create_role(
     role_data: RoleCreate,
     service: RoleServiceDep,
 ):
-    """Create a new role"""
+    """
+    Create a new role.
+
+    Creates a role with specified attributes and optional
+    associations to processes.
+
+    Returns the newly created role with all details.
+    """
     return await service.create_role(role_data)
 
 
 @router.get("/", response_model=List[RoleRead])
 async def get_roles(
     service: RoleServiceDep,
-    offset: int = Query(0, ge=0, description="Skip the first N items"),
+    skip: int = Query(0, ge=0, description="Skip the first N items"),
     limit: int = Query(100, ge=1, le=1000, description="Limit the number of items returned"),
 ):
-    """Get a paginated list of roles"""
-    return await service.get_roles(offset=offset, limit=limit)
+    """
+    Get a list of roles with pagination.
+
+    Args:
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+
+    Returns a list of roles with their details and process relationships.
+    """
+    return await service.get_roles(offset=skip, limit=limit)
 
 
 @router.get("/{role_id}", response_model=RoleRead)
@@ -35,7 +50,14 @@ async def get_role(
     role_id: int,
     service: RoleServiceDep,
 ):
-    """Get a specific role by ID"""
+    """
+    Get a single role by ID.
+
+    Retrieves detailed information about a specific role,
+    including its creator and associated processes.
+
+    Raises 404 if role not found.
+    """
     return await service.get_role_by_id(role_id)
 
 
@@ -45,7 +67,15 @@ async def update_role(
     role_data: RoleUpdate,
     service: RoleServiceDep,
 ):
-    """Update a role's information"""
+    """
+    Update an existing role.
+
+    Updates role attributes and/or process relationships.
+    Supports partial updates (only specified fields will be updated).
+
+    Returns the updated role with all details.
+    Raises 404 if role not found.
+    """
     return await service.update_role(role_id, role_data)
 
 
@@ -54,6 +84,14 @@ async def delete_role(
     role_id: int,
     service: RoleServiceDep,
 ):
-    """Delete a role"""
+    """
+    Delete a role.
+
+    Completely removes a role and its relationships.
+    This operation cannot be undone.
+
+    Returns a success message.
+    Raises 404 if role not found.
+    """
     await service.delete_role(role_id)
     return {"message": "Role deleted successfully"}

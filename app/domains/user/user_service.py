@@ -24,7 +24,18 @@ class UserService:
         self.session = session
 
     async def create_user(self, user_data: UserCreate) -> User:
-        """Create a new user"""
+        """
+        Create a new user in the database.
+
+        Args:
+            user_data: User creation data containing title
+
+        Returns:
+            User: The newly created user with database ID
+
+        Raises:
+            HTTPException: If there's a database error
+        """
         try:
             # Create new User instance from input data
             db_user = User(title=user_data.title, created_at=datetime.now())
@@ -45,7 +56,16 @@ class UserService:
             raise HTTPException(status_code=500, detail=str(e))
 
     async def get_users(self, skip: int = 0, limit: int = 100) -> List[User]:
-        """Get a list of users with pagination"""
+        """
+        Get a list of users with pagination.
+
+        Args:
+            skip: Number of records to skip (for pagination)
+            limit: Maximum number of records to return
+
+        Returns:
+            List[User]: List of user objects
+        """
         # Get the users with pagination
         result = await self.session.execute(select(User).offset(skip).limit(limit))
 
@@ -56,7 +76,18 @@ class UserService:
         return users
 
     async def get_user_by_id(self, user_id: int) -> User:
-        """Get a single user by ID"""
+        """
+        Get a single user by ID.
+
+        Args:
+            user_id: Database ID of the user to retrieve
+
+        Returns:
+            User: The requested user
+
+        Raises:
+            HTTPException: If user not found (404)
+        """
         # Get the user by ID
         user = await self.session.get(User, user_id)
         if not user:
@@ -66,7 +97,19 @@ class UserService:
         return user
 
     async def update_user(self, user_id: int, user_data: UserUpdate) -> User:
-        """Update an existing user"""
+        """
+        Update an existing user's data.
+
+        Args:
+            user_id: Database ID of the user to update
+            user_data: User update data containing fields to update
+
+        Returns:
+            User: The updated user
+
+        Raises:
+            HTTPException: If user not found (404) or database error (500)
+        """
         # Get the user by ID
         user = await self.session.get(User, user_id)
         if not user:
@@ -93,7 +136,15 @@ class UserService:
             raise HTTPException(status_code=500, detail=str(e))
 
     async def delete_user(self, user_id: int) -> None:
-        """Delete a user"""
+        """
+        Delete a user from the database.
+
+        Args:
+            user_id: Database ID of the user to delete
+
+        Raises:
+            HTTPException: If user not found (404) or database error (500)
+        """
         # Get the user by ID
         user = await self.session.get(User, user_id)
         if not user:

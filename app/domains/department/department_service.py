@@ -26,7 +26,22 @@ class DepartmentService(BaseService):
         super().__init__(session)
 
     async def create_department(self, department_data: DepartmentCreate) -> Department:
-        """Create a new department"""
+        """
+        Create a new department with optional process relationships.
+
+        Creates a department record and establishes relationships with
+        processes based on provided IDs.
+
+        Args:
+            department_data: Data for creating the department, including title,
+                             creator ID, and optional process relationship IDs
+
+        Returns:
+            Department: The newly created department with all relationships loaded
+
+        Raises:
+            HTTPException: If there's a database error or related entities don't exist
+        """
         try:
             # Create new Department instance from input data
             db_department = Department(
@@ -51,13 +66,25 @@ class DepartmentService(BaseService):
             await self.session.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_departments(self, offset: int = 0, limit: int = 100) -> List[Department]:
-        """Get a list of departments with pagination and associated data"""
+    async def get_departments(self, skip: int = 0, limit: int = 100) -> List[Department]:
+        """
+        Get a list of departments with pagination and eager loading of relationships.
+
+        Retrieves departments with their associated creator and process relationships
+        using SQLAlchemy's selectinload for efficient eager loading.
+
+        Args:
+            skip: Number of records to skip for pagination
+            limit: Maximum number of records to return
+
+        Returns:
+            List[Department]: List of department objects with relationships loaded
+        """
         # Get the departments with associated data
         result = await self.session.execute(
             select(Department)
             .options(selectinload(Department.created_by), selectinload(Department.processes))
-            .offset(offset)
+            .offset(skip)
             .limit(limit)
         )
 
@@ -68,7 +95,21 @@ class DepartmentService(BaseService):
         return departments
 
     async def get_department_by_id(self, department_id: int) -> Department:
-        """Get a single department by ID with associated data"""
+        """
+        Get a single department by ID with all relationships loaded.
+
+        Retrieves a specific department with its associated creator and process
+        relationships using efficient eager loading.
+
+        Args:
+            department_id: Database ID of the department to retrieve
+
+        Returns:
+            Department: The requested department with all relationships loaded
+
+        Raises:
+            HTTPException: If department not found (404)
+        """
         # Get the department by ID with associated data
         result = await self.session.execute(
             select(Department)
@@ -87,7 +128,23 @@ class DepartmentService(BaseService):
     async def update_department(
         self, department_id: int, department_data: DepartmentUpdate
     ) -> Department:
-        """Update an existing department"""
+        """
+        Update an existing department and its relationships.
+
+        Updates department attributes and its relationships with processes.
+        Only provided fields will be updated.
+
+        Args:
+            department_id: Database ID of the department to update
+            department_data: Data for updating the department, including fields to
+                             update and process relationship IDs
+
+        Returns:
+            Department: The updated department with all relationships
+
+        Raises:
+            HTTPException: If department not found (404) or database error (500)
+        """
         # Get the department by ID
         department = await self.session.get(Department, department_id)
         if not department:
@@ -115,7 +172,17 @@ class DepartmentService(BaseService):
             raise HTTPException(status_code=500, detail=str(e))
 
     async def delete_department(self, department_id: int) -> None:
-        """Delete a department and clear all of its relationships"""
+        """
+        Delete a department and clear all of its relationships.
+
+        Removes all relationships to processes before deleting the department itself.
+
+        Args:
+            department_id: Database ID of the department to delete
+
+        Raises:
+            HTTPException: If department not found (404) or database error (500)
+        """
         # Get the department by ID
         department = await self.session.get(Department, department_id)
         if not department:
@@ -136,9 +203,12 @@ class DepartmentService(BaseService):
     async def _update_relationships(
         self, department: Department, process_ids: Optional[List[int]] = None
     ) -> None:
-        """Update the many-to-many relationships of a department
+        """
+        Update the many-to-many relationships of a department.
 
         This method handles adding and removing related entities based on the provided IDs.
+        It uses the base service's update_many_to_many_relationship method to efficiently
+        update each relationship without completely replacing collections.
 
         Args:
             department: The department to update

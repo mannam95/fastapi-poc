@@ -6,6 +6,11 @@ from pydantic import BaseModel
 
 # Nested schemas for related entities
 class UserInfo(BaseModel):
+    """
+    Simplified user information schema for nested responses.
+    Contains only essential user attributes for display in resource contexts.
+    """
+
     id: int
     title: str
     created_at: datetime
@@ -15,6 +20,11 @@ class UserInfo(BaseModel):
 
 
 class ProcessInfo(BaseModel):
+    """
+    Simplified process information schema for nested responses.
+    Contains only the basic process attributes needed in resource contexts.
+    """
+
     id: int
     title: str
     description: Optional[str] = None
@@ -25,20 +35,30 @@ class ProcessInfo(BaseModel):
 
 # Main schemas
 class ResourceBase(BaseModel):
-    """Base schema for Resource"""
+    """
+    Base schema for Resource with common attributes.
+    Defines the core field (title) shared by all resource schemas.
+    """
 
     title: str
 
 
 class ResourceCreate(ResourceBase):
-    """Schema for creating a new resource"""
+    """
+    Schema for creating a new resource.
+    Extends the base schema with creator ID and optional process associations.
+    """
 
     created_by_id: int
     process_ids: Optional[List[int]] = []
 
 
 class ResourceRead(ResourceBase):
-    """Schema for reading resource data"""
+    """
+    Schema for reading resource data.
+    Provides a complete representation of a resource including relationships
+    with users and processes for API responses.
+    """
 
     id: int
     created_at: datetime
@@ -50,7 +70,11 @@ class ResourceRead(ResourceBase):
 
 
 class ResourceUpdate(BaseModel):
-    """Schema for updating a resource"""
+    """
+    Schema for updating a resource.
+    All fields are optional to support partial updates of attributes
+    and process relationships.
+    """
 
     title: Optional[str] = None
     process_ids: Optional[List[int]] = []

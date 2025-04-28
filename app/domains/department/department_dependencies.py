@@ -8,19 +8,20 @@ from app.domains.department.department_service import DepartmentService
 
 def get_department_service(session: DBSessionDep) -> DepartmentService:
     """
-    Dependency provider for DepartmentService
+    Dependency provider for DepartmentService.
 
-    This function creates a new instance of DepartmentService with the provided database session.
-    It's used by FastAPI's dependency injection system to inject the service into route handlers.
+    Creates a new instance of DepartmentService with the provided database session.
+    This function is used by FastAPI's dependency injection system to
+    make the service available to route handlers.
 
     Args:
         session: SQLAlchemy async session for database operations
 
     Returns:
-        An instance of DepartmentService with the session injected
+        DepartmentService: An instance of DepartmentService with the session injected
     """
     return DepartmentService(session)
 
 
-# Type annotation for convenience
+# Type annotation for convenience in route function signatures
 DepartmentServiceDep = Annotated[DepartmentService, Depends(get_department_service)]

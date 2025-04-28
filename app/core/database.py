@@ -17,12 +17,19 @@ SCHEMA = "public"  # Default PostgreSQL schema
 
 
 class DatabaseSessionManager:
+    """
+    Manages database connections and session creation.
+    Provides an abstraction for creating and managing SQLAlchemy async sessions.
+    """
+
     def __init__(self):
+        """Initialize DatabaseSessionManager with no engine or sessionmaker"""
         self._engine: AsyncEngine | None = None
         self._sessionmaker: async_sessionmaker | None = None
 
     def init(self, host: Union[str, URL]):
-        """Initialize the database engine with the given URL
+        """
+        Initialize the database engine with the given URL.
 
         Args:
             host: Database URL as string or SQLAlchemy URL object
@@ -38,6 +45,10 @@ class DatabaseSessionManager:
         )
 
     async def close(self):
+        """
+        Close the database engine and clean up resources.
+        Raises exception if called before initialization.
+        """
         if self._engine is None:
             raise Exception("DatabaseSessionManager is not initialized")
         await self._engine.dispose()
@@ -46,11 +57,26 @@ class DatabaseSessionManager:
         self._sessionmaker = None
 
     def session(self) -> AsyncSession:
+        """
+        Create and return a new database session.
+
+        Returns:
+            AsyncSession: A new SQLAlchemy async session
+
+        Raises:
+            Exception: If manager is not initialized
+        """
         if self._sessionmaker is None:
             raise Exception("DatabaseSessionManager is not initialized")
         return self._sessionmaker()
 
     async def create_all(self):
+        """
+        Create all database tables defined in SQLAlchemy models.
+
+        Raises:
+            Exception: If manager is not initialized
+        """
         if self._engine is None:
             raise Exception("DatabaseSessionManager is not initialized")
 
@@ -63,6 +89,13 @@ sessionmanager = DatabaseSessionManager()
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:
+    """
+    FastAPI dependency that provides a database session and handles cleanup.
+    Yields an active session and ensures proper cleanup after use.
+
+    Yields:
+        AsyncSession: SQLAlchemy async session for database operations
+    """
     session = sessionmanager.session()
     try:
         # Set search path only if a specific schema is defined
@@ -77,11 +110,15 @@ async def get_db_session() -> AsyncIterator[AsyncSession]:
         await session.close()
 
 
+# Type annotation for the database session dependency
 DBSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
 async def create_db_and_tables():
-    """Initialize the database and create all tables"""
+    """
+    Initialize the database and create all tables.
+    Should be called during application startup.
+    """
     try:
         await sessionmanager.create_all()
     except Exception as e:
@@ -91,7 +128,10 @@ async def create_db_and_tables():
 
 # use the DBSessionDep via dependency injection
 async def create_initial_data():
-    """Create initial data for the database"""
+    """
+    Create initial data for the database.
+    Creates sample users, departments, locations, resources, roles, and processes.
+    """
     try:
         from app.domains.department.department_model import Department
         from app.domains.location.location_model import Location
