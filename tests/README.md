@@ -1,106 +1,62 @@
-# Testing Guide for FastAPI POC Project
+# Testing Guide
 
-This directory contains tests for the FastAPI Proof of Concept application. The tests are organized by domain and use pytest for test execution.
+This guide covers the testing approach for the FastAPI project.
 
 ## Test Structure
 
-The test directory structure mirrors the application structure:
-
 ```
 tests/
-├── conftest.py              # Pytest fixtures and configuration
-├── utils.py                 # Utility functions for testing
-├── domains/                 # Tests organized by domain
-│   ├── process/             # Process domain tests
-│   │   ├── test_process_service.py    # Process service tests
-│   │   ├── test_process_router.py     # Process router tests
+├── conftest.py            # Pytest fixtures and configuration
+├── domains/               # Tests organized by domain
+│   ├── department/        
+│   ├── location/          
+│   ├── process/           
+│   ├── resource/          
+│   ├── role/              
+│   └── user/              
 ```
-
-## Test Types
-
-Tests are categorized using pytest markers:
-
-- `unit`: Unit tests that test individual functions/methods
-- `integration`: Integration tests that test interactions between components
-    - For example, consider process_router.py
-    - This file contains tests for the process router
-    - Each test case talks to multiple components (router → service → DB)
-- `service`: Tests for service layer logic
-- `router`: Tests for API endpoints
 
 ## Running Tests
 
-### Using Make Commands
-
-The project's Makefile includes several commands to run tests:
-
 ```bash
-# Run all tests
+# All tests
 make test
 
-# Run tests with coverage report
-make test-cov
-
-# Run specific types of tests
+# Specific test types
 make test-unit
 make test-integration
-make test-service
-make test-router
 
+# Coverage report
+make test-cov
 ```
-
-### Using Pytest Directly
-
-If you prefer to run pytest directly, you can use the following commands within the Docker environment:
-
-```bash
-# Run all tests
-pytest
-
-# Run tests with coverage
-pytest --cov=app --cov-report=term-missing
-
-# Run tests by marker
-pytest -m unit
-pytest -m integration
-pytest -m service
-pytest -m router
-```
-
-## Adding New Tests
-
-### Creating Tests for a New Domain
-
-1. Create a new directory under `tests/domains/` for your domain
-2. Add an `__init__.py` file to make it a Python package
-3. Create test files for the service layer and router
-
-Example:
-
-```bash
-mkdir -p tests/domains/new_domain
-touch tests/domains/new_domain/__init__.py
-touch tests/domains/new_domain/test_new_domain_service.py
-touch tests/domains/new_domain/test_new_domain_router.py
-```
-
-### Testing Guidelines
-
-1. **Test Independence**: Each test should be independent and not rely on the state created by other tests
-2. **Use Fixtures**: Use pytest fixtures for shared setup and teardown
-3. **Test Transactions**: Database tests use transaction rollback to prevent test data from persisting
-4. **Test Coverage**: Aim for comprehensive test coverage, including success and error cases
-5. **Asynchronous Testing**: Use the `@pytest.mark.asyncio` decorator for asynchronous tests
-6. **Use Markers**: Apply appropriate markers to categorize your tests
 
 ## Test Database
 
-Tests use a separate test database to avoid affecting development or production data. The test database is configured in `conftest.py` with the URL `postgresql+asyncpg://postgres:postgres@localhost:5432/test_db`.
-
-Before running tests, make sure your PostgreSQL server is running and the test database exists:
+Tests use a separate database. With Docker, the test database is created automatically.
+For local development, you may need to create a test database:
 
 ```bash
-createdb test_db
+createdb test_fastapi_poc
 ```
 
-If you're using Docker, the test database will be created automatically when you run tests. 
+## Writing New Tests
+
+1. Place tests in the appropriate domain directory
+2. Use fixtures from conftest.py for database and client setup
+3. Use appropriate markers (`unit`, `integration`)
+4. Test both success and error cases
+5. Test database operations use transaction rollbacks
+
+## Example Test
+
+```python
+@pytest.mark.integration
+async def test_create_user(client: AsyncClient, db_session: AsyncSession):
+    response = await client.post(
+        "/users/",
+        json={"name": "Test User", "email": "test@example.com"}
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == "Test User"
+```
