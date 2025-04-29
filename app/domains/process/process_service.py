@@ -3,11 +3,11 @@
 
 from typing import List, Optional
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import NotFoundException
 from app.domains.department.department_model import Department
 from app.domains.location.location_model import Location
 from app.domains.process.process_model import Process
@@ -43,40 +43,36 @@ class ProcessService(BaseService):
             Process: The newly created process with all relationships loaded
 
         Raises:
-            HTTPException: If there's a database error or related entities don't exist
+            DatabaseException: If there's a database error
+            RelationshipException: If related entities don't exist
         """
-        try:
-            # Create new Process instance from input data
-            db_process = Process(
-                title=process_data.title,
-                description=process_data.description,
-                created_by_id=process_data.created_by_id,
-            )
+        # Create new Process instance from input data
+        db_process = Process(
+            title=process_data.title,
+            description=process_data.description,
+            created_by_id=process_data.created_by_id,
+        )
 
-            # Add the process to the database to get an ID
-            self.session.add(db_process)
+        # Add the process to the database to get an ID
+        self.session.add(db_process)
 
-            # Handle relationships
-            await self._update_relationships(
-                db_process,
-                department_ids=process_data.department_ids,
-                location_ids=process_data.location_ids,
-                resource_ids=process_data.resource_ids,
-                role_ids=process_data.role_ids,
-            )
+        # Handle relationships
+        await self._update_relationships(
+            db_process,
+            department_ids=process_data.department_ids,
+            location_ids=process_data.location_ids,
+            resource_ids=process_data.resource_ids,
+            role_ids=process_data.role_ids,
+        )
 
-            # Finally commit all
-            await self.session.commit()
+        # Finally commit all
+        await self.session.commit()
 
-            # refresh the process to get the latest data
-            await self.session.refresh(db_process)
+        # refresh the process to get the latest data
+        await self.session.refresh(db_process)
 
-            # return the process
-            return db_process
-
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # return the process
+        return db_process
 
     async def get_processes(self, offset: int = 0, limit: int = 100) -> List[Process]:
         """
@@ -92,6 +88,9 @@ class ProcessService(BaseService):
 
         Returns:
             List[Process]: List of process objects with relationships loaded
+
+        Raises:
+            DatabaseException: If there's a database error
         """
         # Get the processes with associated data
         result = await self.session.execute(
@@ -127,7 +126,8 @@ class ProcessService(BaseService):
             Process: The requested process with all relationships loaded
 
         Raises:
-            HTTPException: If process not found (404)
+            NotFoundException: If process not found
+            DatabaseException: If there's a database error
         """
         # Get the process by ID with associated data
         result = await self.session.execute(
@@ -145,7 +145,7 @@ class ProcessService(BaseService):
         # Convert the result to a single process
         process = result.scalars().first()
         if not process:
-            raise HTTPException(status_code=404, detail="Process not found")
+            raise NotFoundException(f"Process with ID {process_id} not found")
 
         # return the process
         return process
@@ -166,42 +166,41 @@ class ProcessService(BaseService):
             Process: The updated process with all relationships
 
         Raises:
-            HTTPException: If process not found (404) or database error (500)
+            NotFoundException: If process not found
+            DatabaseException: If there's a database error
+            RelationshipException: If there's an issue with relationship operations
         """
         # Get the process by ID
         process = await self.session.get(Process, process_id)
         if not process:
-            raise HTTPException(status_code=404, detail="Process not found")
-        try:
-            # Update process fields
-            update_data = process_data.model_dump(
-                exclude={"department_ids", "location_ids", "resource_ids", "role_ids"},
-                exclude_unset=True,
-            )
-            for key, value in update_data.items():
-                if value is not None:  # Only update if the value is not None
-                    setattr(process, key, value)
+            raise NotFoundException(f"Process with ID {process_id} not found")
 
-            # Handle relationships
-            await self._update_relationships(
-                process,
-                department_ids=process_data.department_ids,
-                location_ids=process_data.location_ids,
-                resource_ids=process_data.resource_ids,
-                role_ids=process_data.role_ids,
-            )
+        # Update process fields
+        update_data = process_data.model_dump(
+            exclude={"department_ids", "location_ids", "resource_ids", "role_ids"},
+            exclude_unset=True,
+        )
+        for key, value in update_data.items():
+            if value is not None:  # Only update if the value is not None
+                setattr(process, key, value)
 
-            # Finally commit all
-            await self.session.commit()
+        # Handle relationships
+        await self._update_relationships(
+            process,
+            department_ids=process_data.department_ids,
+            location_ids=process_data.location_ids,
+            resource_ids=process_data.resource_ids,
+            role_ids=process_data.role_ids,
+        )
 
-            # refresh the process to get the id
-            await self.session.refresh(process)
+        # Finally commit all
+        await self.session.commit()
 
-            # return the process
-            return process
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # refresh the process to get the id
+        await self.session.refresh(process)
+
+        # return the process
+        return process
 
     async def delete_process(self, process_id: int) -> None:
         """
@@ -214,27 +213,25 @@ class ProcessService(BaseService):
             process_id: Database ID of the process to delete
 
         Raises:
-            HTTPException: If process not found (404) or database error (500)
+            NotFoundException: If process not found
+            DatabaseException: If there's a database error
         """
         # Get the process by ID
         process = await self.session.get(Process, process_id)
         if not process:
-            raise HTTPException(status_code=404, detail="Process not found")
-        try:
-            # Clear all relationships
-            process.departments = []
-            process.locations = []
-            process.resources = []
-            process.roles = []
+            raise NotFoundException(f"Process with ID {process_id} not found")
 
-            # Now delete the process
-            await self.session.delete(process)
+        # Clear all relationships
+        process.departments = []
+        process.locations = []
+        process.resources = []
+        process.roles = []
 
-            # Finally commit all
-            await self.session.commit()
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # Now delete the process
+        await self.session.delete(process)
+
+        # Finally commit all
+        await self.session.commit()
 
     async def _update_relationships(
         self,
@@ -257,6 +254,9 @@ class ProcessService(BaseService):
             location_ids: List of location IDs to associate with the process
             resource_ids: List of resource IDs to associate with the process
             role_ids: List of role IDs to associate with the process
+
+        Raises:
+            RelationshipException: If related entities don't exist
         """
         if department_ids is not None:
             await self.update_many_to_many_relationship(
@@ -271,6 +271,3 @@ class ProcessService(BaseService):
 
         if role_ids is not None:
             await self.update_many_to_many_relationship(process.roles, Role, role_ids)
-
-        await self.session.commit()
-        await self.session.refresh(process)

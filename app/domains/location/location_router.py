@@ -23,6 +23,10 @@ async def create_location(service: LocationServiceDep, location_in: LocationCrea
     associations to processes.
 
     Returns the newly created location with all details.
+
+    Raises:
+        DatabaseException: If there's a database error
+        RelationshipException: If related entities don't exist
     """
     return await service.create_location(location_in)
 
@@ -41,6 +45,9 @@ async def read_locations(
         limit: Maximum number of records to return
 
     Returns a list of locations with their details and process relationships.
+
+    Raises:
+        DatabaseException: If there's a database error
     """
     return await service.get_locations(offset, limit)
 
@@ -56,7 +63,9 @@ async def read_location(
     Retrieves detailed information about a specific location,
     including its creator and associated processes.
 
-    Raises 404 if location not found.
+    Raises:
+        NotFoundException: If location not found
+        DatabaseException: If there's a database error
     """
     return await service.get_location_by_id(location_id)
 
@@ -74,7 +83,11 @@ async def update_location(
     Supports partial updates (only specified fields will be updated).
 
     Returns the updated location with all details.
-    Raises 404 if location not found.
+
+    Raises:
+        NotFoundException: If location not found
+        DatabaseException: If there's a database error
+        RelationshipException: If there's an issue with relationship operations
     """
     return await service.update_location(location_id, location_in)
 
@@ -91,7 +104,10 @@ async def delete_location(
     This operation cannot be undone.
 
     Returns a success message.
-    Raises 404 if location not found.
+
+    Raises:
+        NotFoundException: If location not found
+        DatabaseException: If there's a database error
     """
     await service.delete_location(location_id)
     return {"message": "Location deleted successfully"}

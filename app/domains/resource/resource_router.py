@@ -23,6 +23,10 @@ async def create_resource(service: ResourceServiceDep, resource_in: ResourceCrea
     associations to processes.
 
     Returns the newly created resource with all details.
+
+    Raises:
+        DatabaseException: If there's a database error
+        RelationshipException: If related entities don't exist
     """
     return await service.create_resource(resource_in)
 
@@ -41,6 +45,9 @@ async def read_resources(
         limit: Maximum number of records to return
 
     Returns a list of resources with their details and process relationships.
+
+    Raises:
+        DatabaseException: If there's a database error
     """
     return await service.get_resources(offset, limit)
 
@@ -56,7 +63,9 @@ async def read_resource(
     Retrieves detailed information about a specific resource,
     including its creator and associated processes.
 
-    Raises 404 if resource not found.
+    Raises:
+        NotFoundException: If resource not found
+        DatabaseException: If there's a database error
     """
     return await service.get_resource_by_id(resource_id)
 
@@ -74,7 +83,11 @@ async def update_resource(
     Supports partial updates (only specified fields will be updated).
 
     Returns the updated resource with all details.
-    Raises 404 if resource not found.
+
+    Raises:
+        NotFoundException: If resource not found
+        DatabaseException: If there's a database error
+        RelationshipException: If there's an issue with relationship operations
     """
     return await service.update_resource(resource_id, resource_in)
 
@@ -91,7 +104,10 @@ async def delete_resource(
     This operation cannot be undone.
 
     Returns a success message.
-    Raises 404 if resource not found.
+
+    Raises:
+        NotFoundException: If resource not found
+        DatabaseException: If there's a database error
     """
     await service.delete_resource(resource_id)
     return {"message": "Resource deleted successfully"}

@@ -4,15 +4,16 @@
 from datetime import datetime
 from typing import List
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import NotFoundException
+from app.domains.shared.base_service import BaseService
 from app.domains.user.user_model import User
 from app.domains.user.user_schemas import UserCreate, UserUpdate
 
 
-class UserService:
+class UserService(BaseService):
     """Service for user-related operations"""
 
     def __init__(self, session: AsyncSession):
@@ -21,7 +22,7 @@ class UserService:
         Args:
             session: SQLAlchemy async session for database operations
         """
-        self.session = session
+        super().__init__(session)
 
     async def create_user(self, user_data: UserCreate) -> User:
         """
@@ -34,26 +35,22 @@ class UserService:
             User: The newly created user with database ID
 
         Raises:
-            HTTPException: If there's a database error
+            DatabaseException: If there's a database error
         """
-        try:
-            # Create new User instance from input data
-            db_user = User(title=user_data.title, created_at=datetime.now())
+        # Create new User instance from input data
+        db_user = User(title=user_data.title, created_at=datetime.now())
 
-            # Add the user to the database to get an ID
-            self.session.add(db_user)
+        # Add the user to the database to get an ID
+        self.session.add(db_user)
 
-            # Commit all
-            await self.session.commit()
+        # Commit all
+        await self.session.commit()
 
-            # Refresh the user to get the latest data
-            await self.session.refresh(db_user)
+        # Refresh the user to get the latest data
+        await self.session.refresh(db_user)
 
-            # Return the user
-            return db_user
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # Return the user
+        return db_user
 
     async def get_users(self, offset: int = 0, limit: int = 100) -> List[User]:
         """
@@ -65,6 +62,9 @@ class UserService:
 
         Returns:
             List[User]: List of user objects
+
+        Raises:
+            DatabaseException: If there's a database error
         """
         # Get the users with pagination
         result = await self.session.execute(select(User).offset(offset).limit(limit))
@@ -86,12 +86,13 @@ class UserService:
             User: The requested user
 
         Raises:
-            HTTPException: If user not found (404)
+            NotFoundException: If user not found
+            DatabaseException: If there's a database error
         """
         # Get the user by ID
         user = await self.session.get(User, user_id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise NotFoundException(f"User with ID {user_id} not found")
 
         # Return the user
         return user
@@ -108,32 +109,30 @@ class UserService:
             User: The updated user
 
         Raises:
-            HTTPException: If user not found (404) or database error (500)
+            NotFoundException: If user not found
+            DatabaseException: If there's a database error
         """
         # Get the user by ID
         user = await self.session.get(User, user_id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        try:
-            # Get the update data
-            update_data = user_data.model_dump(exclude_unset=True)
+            raise NotFoundException(f"User with ID {user_id} not found")
 
-            # Apply updates
-            for key, value in update_data.items():
-                if value is not None:  # Only update if the value is not None
-                    setattr(user, key, value)
+        # Get the update data
+        update_data = user_data.model_dump(exclude_unset=True)
 
-            # Commit all
-            await self.session.commit()
+        # Apply updates
+        for key, value in update_data.items():
+            if value is not None:  # Only update if the value is not None
+                setattr(user, key, value)
 
-            # Refresh the user to get the latest data
-            await self.session.refresh(user)
+        # Commit all
+        await self.session.commit()
 
-            # Return the user
-            return user
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # Refresh the user to get the latest data
+        await self.session.refresh(user)
+
+        # Return the user
+        return user
 
     async def delete_user(self, user_id: int) -> None:
         """
@@ -143,18 +142,16 @@ class UserService:
             user_id: Database ID of the user to delete
 
         Raises:
-            HTTPException: If user not found (404) or database error (500)
+            NotFoundException: If user not found
+            DatabaseException: If there's a database error
         """
         # Get the user by ID
         user = await self.session.get(User, user_id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        try:
-            # Delete the user
-            await self.session.delete(user)
+            raise NotFoundException(f"User with ID {user_id} not found")
 
-            # Commit all
-            await self.session.commit()
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # Delete the user
+        await self.session.delete(user)
+
+        # Commit all
+        await self.session.commit()

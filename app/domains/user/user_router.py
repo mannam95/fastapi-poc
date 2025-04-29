@@ -17,6 +17,9 @@ async def create_user(service: UserServiceDep, user_in: UserCreate):
     Users serve as creators for other entities in the system.
 
     Returns the newly created user with all details.
+
+    Raises:
+        DatabaseException: If there's a database error
     """
     return await service.create_user(user_in)
 
@@ -35,6 +38,9 @@ async def read_users(
         limit: Maximum number of records to return
 
     Returns a list of users with their details.
+
+    Raises:
+        DatabaseException: If there's a database error
     """
     return await service.get_users(offset, limit)
 
@@ -49,7 +55,9 @@ async def read_user(
 
     Retrieves detailed information about a specific user.
 
-    Raises 404 if user not found.
+    Raises:
+        NotFoundException: If user not found
+        DatabaseException: If there's a database error
     """
     return await service.get_user_by_id(user_id)
 
@@ -67,7 +75,10 @@ async def update_user(
     Supports partial updates (only specified fields will be updated).
 
     Returns the updated user with all details.
-    Raises 404 if user not found.
+
+    Raises:
+        NotFoundException: If user not found
+        DatabaseException: If there's a database error
     """
     return await service.update_user(user_id, user_in)
 
@@ -84,7 +95,10 @@ async def delete_user(
     This operation cannot be undone.
 
     Returns a success message.
-    Raises 404 if user not found.
+
+    Raises:
+        NotFoundException: If user not found
+        DatabaseException: If there's a database error
     """
     await service.delete_user(user_id)
     return {"message": "User deleted successfully"}

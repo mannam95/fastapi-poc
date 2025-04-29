@@ -23,6 +23,10 @@ async def create_role(
     associations to processes.
 
     Returns the newly created role with all details.
+
+    Raises:
+        DatabaseException: If there's a database error
+        RelationshipException: If related entities don't exist
     """
     return await service.create_role(role_data)
 
@@ -41,6 +45,9 @@ async def get_roles(
         limit: Maximum number of records to return
 
     Returns a list of roles with their details and process relationships.
+
+    Raises:
+        DatabaseException: If there's a database error
     """
     return await service.get_roles(offset=offset, limit=limit)
 
@@ -56,7 +63,9 @@ async def get_role(
     Retrieves detailed information about a specific role,
     including its creator and associated processes.
 
-    Raises 404 if role not found.
+    Raises:
+        NotFoundException: If role not found
+        DatabaseException: If there's a database error
     """
     return await service.get_role_by_id(role_id)
 
@@ -74,7 +83,11 @@ async def update_role(
     Supports partial updates (only specified fields will be updated).
 
     Returns the updated role with all details.
-    Raises 404 if role not found.
+
+    Raises:
+        NotFoundException: If role not found
+        DatabaseException: If there's a database error
+        RelationshipException: If there's an issue with relationship operations
     """
     return await service.update_role(role_id, role_data)
 
@@ -91,7 +104,10 @@ async def delete_role(
     This operation cannot be undone.
 
     Returns a success message.
-    Raises 404 if role not found.
+
+    Raises:
+        NotFoundException: If role not found
+        DatabaseException: If there's a database error
     """
     await service.delete_role(role_id)
     return {"message": "Role deleted successfully"}

@@ -3,11 +3,11 @@
 
 from typing import List, Optional
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import NotFoundException
 from app.domains.location.location_model import Location
 from app.domains.location.location_schemas import LocationCreate, LocationUpdate
 from app.domains.process.process_model import Process
@@ -40,31 +40,26 @@ class LocationService(BaseService):
             Location: The newly created location with all relationships loaded
 
         Raises:
-            HTTPException: If there's a database error or related entities don't exist
+            DatabaseException: If there's a database error
+            RelationshipException: If related entities don't exist
         """
-        try:
-            # Create new Location instance from input data
-            db_location = Location(
-                title=location_data.title, created_by_id=location_data.created_by_id
-            )
+        # Create new Location instance from input data
+        db_location = Location(title=location_data.title, created_by_id=location_data.created_by_id)
 
-            # Add the location to the database to get an ID
-            self.session.add(db_location)
+        # Add the location to the database to get an ID
+        self.session.add(db_location)
 
-            # Handle processes if provided
-            await self._update_relationships(db_location, location_data.process_ids)
+        # Handle processes if provided
+        await self._update_relationships(db_location, location_data.process_ids)
 
-            # Finally commit all
-            await self.session.commit()
+        # Finally commit all
+        await self.session.commit()
 
-            # refresh the location to get the latest data
-            await self.session.refresh(db_location)
+        # refresh the location to get the latest data
+        await self.session.refresh(db_location)
 
-            # return the location
-            return db_location
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # return the location
+        return db_location
 
     async def get_locations(self, offset: int = 0, limit: int = 100) -> List[Location]:
         """
@@ -79,6 +74,9 @@ class LocationService(BaseService):
 
         Returns:
             List[Location]: List of location objects with relationships loaded
+
+        Raises:
+            DatabaseException: If there's a database error
         """
         # Get the locations with associated data
         result = await self.session.execute(
@@ -108,7 +106,8 @@ class LocationService(BaseService):
             Location: The requested location with all relationships loaded
 
         Raises:
-            HTTPException: If location not found (404)
+            NotFoundException: If location not found
+            DatabaseException: If there's a database error
         """
         # Get the location by ID with associated data
         result = await self.session.execute(
@@ -120,7 +119,7 @@ class LocationService(BaseService):
         # Convert the result to a single location
         location = result.scalars().first()
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
+            raise NotFoundException(f"Location with ID {location_id} not found")
 
         # return the location
         return location
@@ -141,33 +140,32 @@ class LocationService(BaseService):
             Location: The updated location with all relationships
 
         Raises:
-            HTTPException: If location not found (404) or database error (500)
+            NotFoundException: If location not found
+            DatabaseException: If there's a database error
+            RelationshipException: If there's an issue with relationship operations
         """
         # Get the location by ID
         location = await self.session.get(Location, location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
-        try:
-            # Update location fields
-            update_data = location_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
-            for key, value in update_data.items():
-                if value is not None:  # Only update if the value is not None
-                    setattr(location, key, value)
+            raise NotFoundException(f"Location with ID {location_id} not found")
 
-            # Handle relationships
-            await self._update_relationships(location, location_data.process_ids)
+        # Update location fields
+        update_data = location_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
+        for key, value in update_data.items():
+            if value is not None:  # Only update if the value is not None
+                setattr(location, key, value)
 
-            # Finally commit all
-            await self.session.commit()
+        # Handle relationships
+        await self._update_relationships(location, location_data.process_ids)
 
-            # refresh the location to get the latest data
-            await self.session.refresh(location)
+        # Finally commit all
+        await self.session.commit()
 
-            # return the location
-            return location
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # refresh the location to get the latest data
+        await self.session.refresh(location)
+
+        # return the location
+        return location
 
     async def delete_location(self, location_id: int) -> None:
         """
@@ -179,24 +177,22 @@ class LocationService(BaseService):
             location_id: Database ID of the location to delete
 
         Raises:
-            HTTPException: If location not found (404) or database error (500)
+            NotFoundException: If location not found
+            DatabaseException: If there's a database error
         """
         # Get the location by ID
         location = await self.session.get(Location, location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
-        try:
-            # Clear all relationships
-            location.processes = []
+            raise NotFoundException(f"Location with ID {location_id} not found")
 
-            # Now delete the location
-            await self.session.delete(location)
+        # Clear all relationships
+        location.processes = []
 
-            # Finally commit all
-            await self.session.commit()
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # Now delete the location
+        await self.session.delete(location)
+
+        # Finally commit all
+        await self.session.commit()
 
     async def _update_relationships(
         self, location: Location, process_ids: Optional[List[int]]
@@ -211,9 +207,9 @@ class LocationService(BaseService):
         Args:
             location: The location to update
             process_ids: List of process IDs to associate with the location
+
+        Raises:
+            RelationshipException: If there's an issue with the relationship operations
         """
         if process_ids is not None:
             await self.update_many_to_many_relationship(location.processes, Process, process_ids)
-
-        await self.session.commit()
-        await self.session.refresh(location)

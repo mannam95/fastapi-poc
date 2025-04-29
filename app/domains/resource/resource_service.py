@@ -3,11 +3,11 @@
 
 from typing import List, Optional
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import NotFoundException
 from app.domains.process.process_model import Process
 from app.domains.resource.resource_model import Resource
 from app.domains.resource.resource_schemas import ResourceCreate, ResourceUpdate
@@ -40,31 +40,26 @@ class ResourceService(BaseService):
             Resource: The newly created resource with all relationships loaded
 
         Raises:
-            HTTPException: If there's a database error or related entities don't exist
+            DatabaseException: If there's a database error
+            RelationshipException: If related entities don't exist
         """
-        try:
-            # Create new Resource instance from input data
-            db_resource = Resource(
-                title=resource_data.title, created_by_id=resource_data.created_by_id
-            )
+        # Create new Resource instance from input data
+        db_resource = Resource(title=resource_data.title, created_by_id=resource_data.created_by_id)
 
-            # Add the resource to the database to get an ID
-            self.session.add(db_resource)
+        # Add the resource to the database to get an ID
+        self.session.add(db_resource)
 
-            # Handle relationships
-            await self._update_relationships(db_resource, resource_data.process_ids)
+        # Handle relationships
+        await self._update_relationships(db_resource, resource_data.process_ids)
 
-            # Finally commit all
-            await self.session.commit()
+        # Finally commit all
+        await self.session.commit()
 
-            # refresh the resource to get the id
-            await self.session.refresh(db_resource)
+        # refresh the resource to get the id
+        await self.session.refresh(db_resource)
 
-            # return the resource
-            return db_resource
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # return the resource
+        return db_resource
 
     async def get_resources(self, offset: int = 0, limit: int = 100) -> List[Resource]:
         """
@@ -79,6 +74,9 @@ class ResourceService(BaseService):
 
         Returns:
             List[Resource]: List of resource objects with relationships loaded
+
+        Raises:
+            DatabaseException: If there's a database error
         """
         # Get the resources with associated data
         result = await self.session.execute(
@@ -108,7 +106,8 @@ class ResourceService(BaseService):
             Resource: The requested resource with all relationships loaded
 
         Raises:
-            HTTPException: If resource not found (404)
+            NotFoundException: If resource not found
+            DatabaseException: If there's a database error
         """
         # Get the resource by ID with associated data
         result = await self.session.execute(
@@ -120,7 +119,7 @@ class ResourceService(BaseService):
         # Convert the result to a single resource
         resource = result.scalars().first()
         if not resource:
-            raise HTTPException(status_code=404, detail="Resource not found")
+            raise NotFoundException(f"Resource with ID {resource_id} not found")
 
         # return the resource
         return resource
@@ -141,33 +140,32 @@ class ResourceService(BaseService):
             Resource: The updated resource with all relationships
 
         Raises:
-            HTTPException: If resource not found (404) or database error (500)
+            NotFoundException: If resource not found
+            DatabaseException: If there's a database error
+            RelationshipException: If there's an issue with relationship operations
         """
         # Get the resource by ID
         resource = await self.session.get(Resource, resource_id)
         if not resource:
-            raise HTTPException(status_code=404, detail="Resource not found")
-        try:
-            # Update resource fields
-            update_data = resource_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
-            for key, value in update_data.items():
-                if value is not None:  # Only update if the value is not None
-                    setattr(resource, key, value)
+            raise NotFoundException(f"Resource with ID {resource_id} not found")
 
-            # Handle relationships
-            await self._update_relationships(resource, resource_data.process_ids)
+        # Update resource fields
+        update_data = resource_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
+        for key, value in update_data.items():
+            if value is not None:  # Only update if the value is not None
+                setattr(resource, key, value)
 
-            # Finally commit all
-            await self.session.commit()
+        # Handle relationships
+        await self._update_relationships(resource, resource_data.process_ids)
 
-            # refresh the resource to get the id
-            await self.session.refresh(resource)
+        # Finally commit all
+        await self.session.commit()
 
-            # return the resource
-            return resource
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # refresh the resource to get the id
+        await self.session.refresh(resource)
+
+        # return the resource
+        return resource
 
     async def delete_resource(self, resource_id: int) -> None:
         """
@@ -179,24 +177,22 @@ class ResourceService(BaseService):
             resource_id: Database ID of the resource to delete
 
         Raises:
-            HTTPException: If resource not found (404) or database error (500)
+            NotFoundException: If resource not found
+            DatabaseException: If there's a database error
         """
         # Get the resource by ID
         resource = await self.session.get(Resource, resource_id)
         if not resource:
-            raise HTTPException(status_code=404, detail="Resource not found")
-        try:
-            # Clear all relationships
-            resource.processes = []
+            raise NotFoundException(f"Resource with ID {resource_id} not found")
 
-            # Now delete the resource
-            await self.session.delete(resource)
+        # Clear all relationships
+        resource.processes = []
 
-            # Finally commit all
-            await self.session.commit()
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # Now delete the resource
+        await self.session.delete(resource)
+
+        # Finally commit all
+        await self.session.commit()
 
     async def _update_relationships(
         self, resource: Resource, process_ids: Optional[List[int]]
@@ -211,9 +207,9 @@ class ResourceService(BaseService):
         Args:
             resource: The resource to update
             process_ids: List of process IDs to associate with the resource
+
+        Raises:
+            RelationshipException: If there's an issue with relationship operations
         """
         if process_ids is not None:
             await self.update_many_to_many_relationship(resource.processes, Process, process_ids)
-
-        await self.session.commit()
-        await self.session.refresh(resource)

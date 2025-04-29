@@ -3,11 +3,11 @@
 
 from typing import List, Optional
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import NotFoundException
 from app.domains.process.process_model import Process
 from app.domains.role.role_model import Role
 from app.domains.role.role_schemas import RoleCreate, RoleUpdate
@@ -40,29 +40,26 @@ class RoleService(BaseService):
             Role: The newly created role with all relationships loaded
 
         Raises:
-            HTTPException: If there's a database error or related entities don't exist
+            DatabaseException: If there's a database error
+            RelationshipException: If related entities don't exist
         """
-        try:
-            # Create a new role
-            role = Role(title=role_data.title, created_by_id=role_data.created_by_id)
+        # Create a new role
+        role = Role(title=role_data.title, created_by_id=role_data.created_by_id)
 
-            # Add the role to the database to get an ID
-            self.session.add(role)
+        # Add the role to the database to get an ID
+        self.session.add(role)
 
-            # Handle processes if provided
-            await self._update_relationships(role, role_data.process_ids)
+        # Handle processes if provided
+        await self._update_relationships(role, role_data.process_ids)
 
-            # Finally commit all
-            await self.session.commit()
+        # Finally commit all
+        await self.session.commit()
 
-            # refresh the role to get the latest data
-            await self.session.refresh(role)
+        # refresh the role to get the latest data
+        await self.session.refresh(role)
 
-            # return the role
-            return role
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # return the role
+        return role
 
     async def get_roles(self, offset: int = 0, limit: int = 100) -> List[Role]:
         """
@@ -77,6 +74,9 @@ class RoleService(BaseService):
 
         Returns:
             List[Role]: List of role objects with relationships loaded
+
+        Raises:
+            DatabaseException: If there's a database error
         """
         # Get the roles with associated data
         query = (
@@ -107,7 +107,8 @@ class RoleService(BaseService):
             Role: The requested role with all relationships loaded
 
         Raises:
-            HTTPException: If role not found (404)
+            NotFoundException: If role not found
+            DatabaseException: If there's a database error
         """
         # Get the role by ID with associated data
         query = (
@@ -120,7 +121,7 @@ class RoleService(BaseService):
         # Convert the result to a single role
         role = result.scalars().first()
         if not role:
-            raise HTTPException(status_code=404, detail=f"Role with ID {role_id} not found")
+            raise NotFoundException(f"Role with ID {role_id} not found")
 
         # return the role
         return role
@@ -141,34 +142,32 @@ class RoleService(BaseService):
             Role: The updated role with all relationships
 
         Raises:
-            HTTPException: If role not found (404) or database error (500)
+            NotFoundException: If role not found
+            DatabaseException: If there's a database error
+            RelationshipException: If there's an issue with relationship operations
         """
         # Get the role by ID
         role = await self.session.get(Role, role_id)
         if not role:
-            raise HTTPException(status_code=404, detail=f"Role with ID {role_id} not found")
+            raise NotFoundException(f"Role with ID {role_id} not found")
 
-        try:
-            # Update the role fields
-            update_data = role_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
-            for key, value in update_data.items():
-                if value is not None:
-                    setattr(role, key, value)
+        # Update the role fields
+        update_data = role_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
+        for key, value in update_data.items():
+            if value is not None:
+                setattr(role, key, value)
 
-            # Handle relationships
-            await self._update_relationships(role, role_data.process_ids)
+        # Handle relationships
+        await self._update_relationships(role, role_data.process_ids)
 
-            # Finally commit all
-            await self.session.commit()
+        # Finally commit all
+        await self.session.commit()
 
-            # refresh the role to get the latest data
-            await self.session.refresh(role)
+        # refresh the role to get the latest data
+        await self.session.refresh(role)
 
-            # return the role
-            return role
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # return the role
+        return role
 
     async def delete_role(self, role_id: int) -> None:
         """
@@ -180,25 +179,22 @@ class RoleService(BaseService):
             role_id: Database ID of the role to delete
 
         Raises:
-            HTTPException: If role not found (404) or database error (500)
+            NotFoundException: If role not found
+            DatabaseException: If there's a database error
         """
         # Get the role by ID
         role = await self.session.get(Role, role_id)
         if not role:
-            raise HTTPException(status_code=404, detail=f"Role with ID {role_id} not found")
+            raise NotFoundException(f"Role with ID {role_id} not found")
 
-        try:
-            # Clear all relationships
-            role.processes = []
+        # Clear all relationships
+        role.processes = []
 
-            # Now delete the role
-            await self.session.delete(role)
+        # Now delete the role
+        await self.session.delete(role)
 
-            # Finally commit all
-            await self.session.commit()
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # Finally commit all
+        await self.session.commit()
 
     async def _update_relationships(self, role: Role, process_ids: Optional[List[int]]) -> None:
         """
@@ -211,9 +207,9 @@ class RoleService(BaseService):
         Args:
             role: The role to update
             process_ids: List of process IDs to associate with the role
+
+        Raises:
+            RelationshipException: If there's an issue with relationship operations
         """
         if process_ids is not None:
             await self.update_many_to_many_relationship(role.processes, Process, process_ids)
-
-        await self.session.commit()
-        await self.session.refresh(role)
