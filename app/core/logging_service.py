@@ -1,10 +1,12 @@
 import json
 import logging
+import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Annotated, Any, Dict
 
 from fastapi import Depends, Request, Response
+from loguru import logger
 
 from app.core.config import settings
 
@@ -39,70 +41,86 @@ class BaseLoggingService(ABC):
 
 
 class ConsoleLoggingService(BaseLoggingService):
-    """Development logging service that logs to console"""
+    """Development logging service that logs to console using Loguru"""
 
     def __init__(self):
-        self.logger = logging.getLogger("console")
-        self.logger.setLevel(logging.INFO)
+        # Ensure only one handler to avoid duplicates
+        logger.remove()
 
-        # Add console handler if not already present
-        if not self.logger.handlers:
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(
-                logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-            )
-            self.logger.addHandler(console_handler)
+        # Add a new console (stdout) handler
+        logger.add(
+            sink=sys.stdout,
+            level="DEBUG",
+            format=(
+                "<blue>{time:YYYY-MM-DD HH:mm:ss}</blue> | "
+                "<yellow><level>{level}</level></yellow> | "
+                "<green>{message}</green>"
+            ),
+            colorize=True,
+        )
+
+        self.logger = logger
 
     async def log_request(self, request: Request) -> None:
-        """Log incoming HTTP request"""
-        log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "type": "request",
-            "method": request.method,
-            "url": str(request.url),
-            "headers": dict(request.headers),
-            "client": request.client.host if request.client else None,
-        }
-        self.logger.info(json.dumps(log_data))
+        self.logger.info(
+            json.dumps(
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "type": "request",
+                    "method": request.method,
+                    "url": str(request.url),
+                    "headers": dict(request.headers),
+                    "client": request.client.host if request.client else None,
+                }
+            )
+        )
 
     async def log_response(self, response: Response, request: Request) -> None:
-        """Log outgoing HTTP response"""
-        log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "type": "response",
-            "status_code": response.status_code,
-            "method": request.method,
-            "url": str(request.url),
-        }
-        self.logger.info(json.dumps(log_data))
+        self.logger.info(
+            json.dumps(
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "type": "response",
+                    "status_code": response.status_code,
+                    "method": request.method,
+                    "url": str(request.url),
+                }
+            )
+        )
 
     async def log_business_event(self, event_type: str, data: Dict[str, Any]) -> None:
-        """Log business-specific events"""
-        log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "type": "business_event",
-            "event_type": event_type,
-            "data": data,
-        }
-        self.logger.info(json.dumps(log_data))
+        self.logger.info(
+            json.dumps(
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "type": "business_event",
+                    "event_type": event_type,
+                    "data": data,
+                }
+            )
+        )
 
     async def log_api_exception(self, exception: Exception) -> None:
-        """Log API exceptions"""
-        log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "type": "api_exception",
-            "exception": str(exception),
-        }
-        self.logger.error(json.dumps(log_data))
+        self.logger.error(
+            json.dumps(
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "type": "api_exception",
+                    "exception": str(exception),
+                }
+            )
+        )
 
     async def log_business_exception(self, exception: Exception) -> None:
-        """Log business-specific exceptions"""
-        log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "type": "business_exception",
-            "exception": str(exception),
-        }
-        self.logger.error(json.dumps(log_data))
+        self.logger.error(
+            json.dumps(
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "type": "business_exception",
+                    "exception": str(exception),
+                }
+            )
+        )
 
 
 class ExternalLoggingService(BaseLoggingService):
