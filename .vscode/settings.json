@@ -1,25 +1,8 @@
 {
+  // Editor and Formatting Settings
   "editor.formatOnSave": true,
-  "files.watcherExclude": {
-    "**/.git/objects/**": true,
-    "**/node_modules/**": true
-  },
-  "workbench.colorCustomizations": {
-    "tab.activeBorder": "#ff0000",
-    "tab.unfocusedActiveBorder": "#000000"
-  },
-  "python.defaultInterpreterPath": "~/miniconda3/envs/process-api/bin/python",
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always"
-  },
-  "python.analysis.typeCheckingMode": "basic",
-  "python.testing.pytestEnabled": true,
-  "python.testing.unittestEnabled": false,
-  "python.testing.pytestArgs": ["tests"],
-  "files.exclude": {
-    "**/__pycache__": true,
-    "**/.pytest_cache": true,
-    "**/*.pyc": true
   },
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
@@ -28,14 +11,42 @@
       "source.organizeImports": "always"
     }
   },
+
+  // Python Settings
+  "python.defaultInterpreterPath": "~/miniconda3/envs/process-api/bin/python",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests"],
+
+  // Black Formatter Settings
   "black-formatter.args": [
     "--line-length", "100"
   ],
+
+  // Mypy Type Checker Settings
   "mypy-type-checker.importStrategy": "fromEnvironment",
   "mypy-type-checker.args": [
     "--disallow-untyped-defs=True",
     "--disallow-untyped-calls=True",
     "--check-untyped-defs=True",
     "--no-implicit-optional=True"
-  ]
+  ],
+
+  // File and Workspace Settings
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/node_modules/**": true
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/*.pyc": true
+  },
+
+  // UI Customization
+  "workbench.colorCustomizations": {
+    "tab.activeBorder": "#ff0000",
+    "tab.unfocusedActiveBorder": "#000000"
+  }
 }
