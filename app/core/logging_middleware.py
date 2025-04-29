@@ -18,8 +18,12 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # Log the incoming request
         await self.logging_service.log_request(request)
 
-        # Process the request
-        response = await call_next(request)
+        try:
+            # Process the request
+            response = await call_next(request)
+        except Exception as e:
+            await self.logging_service.log_api_exception(e)
+            raise
 
         # Log the outgoing response
         await self.logging_service.log_response(response, request)
