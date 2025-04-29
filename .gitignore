@@ -175,6 +175,8 @@ cython_debug/
 
 poc-goals.md
 
-# Ignore postgres data
+# Ignore postgres data located anywhere in the project
 postgres-data/
 test-postgres-data/
+**/*postgres-data/
+**/*test-postgres-data/
