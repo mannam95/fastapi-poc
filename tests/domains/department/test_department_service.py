@@ -2,6 +2,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging_service import get_logging_service
 from app.domains.department.department_dependencies import get_department_service
 from app.domains.department.department_schemas import DepartmentCreate, DepartmentUpdate
 
@@ -12,7 +13,7 @@ class TestDepartmentService:
     @pytest.fixture(autouse=True)
     async def setup(self, db_session: AsyncSession):
         """Fixture to set up any common state before each test."""
-        self.service = get_department_service(db_session)
+        self.service = get_department_service(db_session, get_logging_service())
 
     async def test_create_department_integration(self):
         """Test the 'create_department' method"""

@@ -2,6 +2,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging_service import get_logging_service
 from app.domains.location.location_dependencies import get_location_service
 from app.domains.location.location_schemas import LocationCreate, LocationUpdate
 
@@ -12,7 +13,7 @@ class TestLocationService:
     @pytest.fixture(autouse=True)
     async def setup(self, db_session: AsyncSession):
         """Fixture to set up any common state before each test."""
-        self.service = get_location_service(db_session)
+        self.service = get_location_service(db_session, get_logging_service())
 
     async def test_create_location_integration(self):
         """Test the 'create_location' method"""

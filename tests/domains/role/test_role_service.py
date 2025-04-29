@@ -2,6 +2,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging_service import get_logging_service
 from app.domains.role.role_dependencies import get_role_service
 from app.domains.role.role_schemas import RoleCreate, RoleUpdate
 
@@ -12,7 +13,7 @@ class TestRoleService:
     @pytest.fixture(autouse=True)
     async def setup(self, db_session: AsyncSession):
         """Fixture to set up any common state before each test."""
-        self.service = get_role_service(db_session)
+        self.service = get_role_service(db_session, get_logging_service())
 
     async def test_create_role_integration(self):
         """Test the 'create_role' method"""

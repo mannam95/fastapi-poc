@@ -21,7 +21,6 @@ class TestProcessRouter:
             "location_ids": [],
             "resource_ids": [],
             "role_ids": [],
-            "resource_ids": [],
         }
         response = await self.client.post("/api/v1/processes/", json=api_body)
 

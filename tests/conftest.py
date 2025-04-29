@@ -11,10 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import Base, get_db_session, sessionmanager
-
-# from app.domains.process.process_dependencies import get_process_service
-# from app.domains.process.process_service import ProcessService
-
+from app.core.logging_service import get_logging_service
+from tests.mocks.mock_logging_service import MockLoggingService
 
 TEST_DATABASE_URL = settings.SQLALCHEMY_DATABASE_URI
 
@@ -104,16 +102,15 @@ async def client(app: FastAPI, db_session: AsyncSession) -> AsyncGenerator[Async
     async def override_get_db_session():
         yield db_session
 
+    # Override the logging service with our mock
+    def override_get_logging_service():
+        return MockLoggingService()
+
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[get_logging_service] = override_get_logging_service
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
 
     app.dependency_overrides.clear()
-
-
-# @pytest.fixture
-# async def process_service(db_session: AsyncSession) -> ProcessService:
-#     """Fixture for process service with test database session"""
-#     return get_process_service(db_session)
