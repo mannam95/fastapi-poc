@@ -25,17 +25,12 @@ A modern API application demonstrating FastAPI with async SQLAlchemy 2.0 and Pos
 # Clone the repository
 git clone <repository-url>
 
-# Create environment file
-# Not needed as this is POC, the necessary environment variables are already set in the docker-compose.yml file
-
-# To start the application (See make help for all options)
+# Start the application
 make up
 
 # Access API at http://localhost:8000
 # API documentation at http://localhost:8000/docs
 ```
-
-- Note: The python dockerfile is a multi-stage build. The final image is built with the `python:3.11-slim` base image, which is smaller and more efficient for production use.
 
 ## Project Structure
 
@@ -51,21 +46,37 @@ app/
 │   ├── role/           # Role domain
 │   └── user/           # User domain
 └── models/             # SQLAlchemy model imports
+
+docker/
+├── Dockerfile          # Dockerfile for development
+├── Dockerfile.prod     # Dockerfile for production
+└── docker-compose.yml  # Docker Compose configuration
+
+tests/
+├── conftest.py         # Pytest configuration
+├── domains/            # Test domains
+│   ├── department/     # Department test cases
+│   ├── location/       # Location test cases
+│   ├── process/        # Process test cases
+│   ├── resource/       # Resource test cases
+│   ├── role/           # Role test cases
+│   └── user/           # User test cases
+└── test_models.py      # Model test cases
+
+sql-scripts/
+├── init.sql         # Initial SQL script
 ```
 
-For detailed architecture and design decisions, see [ARCHITECTURE.md](ARCHITECTURE.md).
+## Documentation
 
-## Common Tasks
+For detailed documentation, please refer to the following files in the `docs` directory:
 
-### Database Migrations (TODO)
+- [Architecture & Design Decisions](docs/01-architecture.md)
+- [Working with Async SQLAlchemy](docs/02-sqlalchemy.md)
+- [Docker Configuration](docs/03-docker.md)
+- [Testing Guide](docs/04-testing.md)
 
-```bash
-# Create migration
-alembic revision --autogenerate -m "Description"
-
-# Apply migrations
-alembic upgrade head
-```
+## Development
 
 ### Testing
 
@@ -77,7 +88,7 @@ make test
 make test-unit
 make test-integration
 
-# With coverage
+# With code coverage
 make test-cov
 ```
 
@@ -90,63 +101,3 @@ make format
 # Run linters
 make lint
 ```
-
-## Development Setup
-
-### VSCode Setup
-
-This project includes VSCode configuration files in the `.vscode` directory to provide a consistent development experience:
-
-1. Install the recommended extensions when prompted by VSCode
-2. Use the built-in debugger configurations:
-   - Start the FastAPI server by running `make up` in the terminal
-   - "Attach FastAPI Debugger": Can attach to a running FastAPI server
-
-The configuration includes:
-
-- Black formatter on save
-- Flake8 and mypy linting
-- additional settings for Python and FastAPI development
-
-## Working with Async SQLAlchemy
-
-### Using Database Sessions
-
-```python
-from app.core.database import DBSessionDep
-
-@router.get("/items")
-async def read_items(session: DBSessionDep):
-    result = await session.execute(select(Item))
-    items = result.scalars().all()
-    return items
-```
-
-### Common Operations
-
-```python
-# Get item by ID
-item = await session.get(Item, item_id)
-
-# Query items
-result = await session.execute(select(Item).where(Item.name == "test"))
-items = result.scalars().all()
-
-# Create item
-item = Item(name="New Item")
-session.add(item)
-await session.commit()
-await session.refresh(item)
-
-# Update item
-item = await session.get(Item, item_id)
-item.name = "Updated Name"
-await session.commit()
-
-# Delete item
-item = await session.get(Item, item_id)
-await session.delete(item)
-await session.commit()
-```
-
-For more detailed documentation, refer to the API docs at http://localhost:8000/docs when the application is running.

@@ -94,6 +94,7 @@ Docker is used for development and deployment:
 - **Consistent environments**: Same environment for all developers
 - **Dependency isolation**: Services run in isolated containers
 - **Simple orchestration**: Docker Compose for local development
+- **Image size**: The production image is built with a multi-stage build to reduce the size of the final image.
 
 ## Key Technologies
 
