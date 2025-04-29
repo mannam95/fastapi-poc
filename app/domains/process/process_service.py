@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException
+from app.core.logging_service import BaseLoggingService
 from app.domains.department.department_model import Department
 from app.domains.location.location_model import Location
 from app.domains.process.process_model import Process
@@ -20,13 +21,14 @@ from app.domains.shared.base_service import BaseService
 class ProcessService(BaseService):
     """Service for process-related operations"""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
         """Initialize the service with a database session
 
         Args:
             session: SQLAlchemy async session for database operations
+            logging_service: Service for logging operations
         """
-        super().__init__(session)
+        super().__init__(session, logging_service)
 
     async def create_process(self, process_data: ProcessCreate) -> Process:
         """
@@ -71,6 +73,21 @@ class ProcessService(BaseService):
         # refresh the process to get the latest data
         await self.session.refresh(db_process)
 
+        # Log the creation event
+        await self.logging_service.log_business_event(
+            "process_created",
+            {
+                "process_id": db_process.id,
+                "title": db_process.title,
+                "description": db_process.description,
+                "created_by": db_process.created_by_id,
+                "department_ids": process_data.department_ids,
+                "location_ids": process_data.location_ids,
+                "resource_ids": process_data.resource_ids,
+                "role_ids": process_data.role_ids,
+            },
+        )
+
         # return the process
         return db_process
 
@@ -109,6 +126,16 @@ class ProcessService(BaseService):
         # Convert the result to a list of processes
         processes = list(result.scalars().all())
 
+        # Log the retrieval event
+        await self.logging_service.log_business_event(
+            "processes_retrieved",
+            {
+                "count": len(processes),
+                "offset": offset,
+                "limit": limit,
+            },
+        )
+
         # return the processes
         return processes
 
@@ -146,6 +173,14 @@ class ProcessService(BaseService):
         process = result.scalars().first()
         if not process:
             raise NotFoundException(f"Process with ID {process_id} not found")
+
+        # Log the retrieval event
+        await self.logging_service.log_business_event(
+            "process_retrieved",
+            {
+                "process_id": process_id,
+            },
+        )
 
         # return the process
         return process
@@ -196,8 +231,21 @@ class ProcessService(BaseService):
         # Finally commit all
         await self.session.commit()
 
-        # refresh the process to get the id
+        # refresh the process to get the latest data
         await self.session.refresh(process)
+
+        # Log the update event
+        await self.logging_service.log_business_event(
+            "process_updated",
+            {
+                "process_id": process_id,
+                "updated_fields": update_data,
+                "department_ids": process_data.department_ids,
+                "location_ids": process_data.location_ids,
+                "resource_ids": process_data.resource_ids,
+                "role_ids": process_data.role_ids,
+            },
+        )
 
         # return the process
         return process
@@ -233,6 +281,14 @@ class ProcessService(BaseService):
         # Finally commit all
         await self.session.commit()
 
+        # Log the deletion event
+        await self.logging_service.log_business_event(
+            "process_deleted",
+            {
+                "process_id": process_id,
+            },
+        )
+
     async def _update_relationships(
         self,
         process: Process,
@@ -256,18 +312,15 @@ class ProcessService(BaseService):
             role_ids: List of role IDs to associate with the process
 
         Raises:
-            RelationshipException: If related entities don't exist
+            RelationshipException: If there's an issue with the relationship operations
         """
         if department_ids is not None:
             await self.update_many_to_many_relationship(
                 process.departments, Department, department_ids
             )
-
         if location_ids is not None:
             await self.update_many_to_many_relationship(process.locations, Location, location_ids)
-
         if resource_ids is not None:
             await self.update_many_to_many_relationship(process.resources, Resource, resource_ids)
-
         if role_ids is not None:
             await self.update_many_to_many_relationship(process.roles, Role, role_ids)

@@ -12,6 +12,7 @@ from app.core.exceptions import (
     RelationshipException,
     UnexpectedException,
 )
+from app.core.logging_service import BaseLoggingService
 
 # Create a type variable for return values
 T = TypeVar("T")
@@ -72,6 +73,7 @@ class ServiceMetaclass(type):
 
             # Re-raise the exception outside the try-finally block
             if exception_to_raise:
+                await self.logging_service.log_business_exception(exception_to_raise)
                 raise exception_to_raise
 
         return wrapper
@@ -88,10 +90,12 @@ class ExceptionHandlingServiceBase(metaclass=ServiceMetaclass):
     All service classes should inherit from this class.
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
         """Initialize with database session.
 
         Args:
             session: SQLAlchemy async session for database operations
+            logging_service: Logging service for logging exceptions
         """
         self.session = session
+        self.logging_service = logging_service

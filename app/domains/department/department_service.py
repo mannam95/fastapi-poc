@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException
+from app.core.logging_service import BaseLoggingService
 from app.domains.department.department_model import Department
 from app.domains.department.department_schemas import DepartmentCreate, DepartmentUpdate
 from app.domains.process.process_model import Process
@@ -17,13 +18,14 @@ from app.domains.shared.base_service import BaseService
 class DepartmentService(BaseService):
     """Service for department-related operations"""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
         """Initialize the service with a database session
 
         Args:
             session: SQLAlchemy async session for database operations
+            logging_service: Service for logging operations
         """
-        super().__init__(session)
+        super().__init__(session, logging_service)
 
     async def create_department(self, department_data: DepartmentCreate) -> Department:
         """
@@ -60,6 +62,17 @@ class DepartmentService(BaseService):
         # refresh the department to get the latest data
         await self.session.refresh(db_department)
 
+        # Log the creation event
+        await self.logging_service.log_business_event(
+            "department_created",
+            {
+                "department_id": db_department.id,
+                "title": db_department.title,
+                "created_by": db_department.created_by_id,
+                "process_ids": department_data.process_ids,
+            },
+        )
+
         # return the department
         return db_department
 
@@ -90,6 +103,16 @@ class DepartmentService(BaseService):
 
         # Convert the result to a list of departments
         departments = list(result.scalars().all())
+
+        # Log the retrieval event
+        await self.logging_service.log_business_event(
+            "departments_retrieved",
+            {
+                "count": len(departments),
+                "offset": offset,
+                "limit": limit,
+            },
+        )
 
         # return the departments
         return departments
@@ -122,6 +145,14 @@ class DepartmentService(BaseService):
         department = result.scalars().first()
         if not department:
             raise NotFoundException(f"Department with ID {department_id} not found")
+
+        # Log the retrieval event
+        await self.logging_service.log_business_event(
+            "department_retrieved",
+            {
+                "department_id": department_id,
+            },
+        )
 
         # return the department
         return department
@@ -168,6 +199,16 @@ class DepartmentService(BaseService):
         # refresh the department to get the latest data
         await self.session.refresh(department)
 
+        # Log the update event
+        await self.logging_service.log_business_event(
+            "department_updated",
+            {
+                "department_id": department_id,
+                "updated_fields": update_data,
+                "process_ids": department_data.process_ids,
+            },
+        )
+
         # return the department
         return department
 
@@ -198,6 +239,14 @@ class DepartmentService(BaseService):
 
         # Finally commit all
         await self.session.commit()
+
+        # Log the deletion event
+        await self.logging_service.log_business_event(
+            "department_deleted",
+            {
+                "department_id": department_id,
+            },
+        )
 
     async def _update_relationships(
         self, department: Department, process_ids: Optional[List[int]] = None

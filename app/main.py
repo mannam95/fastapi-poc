@@ -3,11 +3,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware import Middleware
 
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import create_db_and_tables, create_initial_data, sessionmanager
 from app.core.exceptions import AppException
+from app.core.logging_middleware import LoggingMiddleware
+from app.core.logging_service import get_logging_service
+
+# Add logging middleware
+middleware = [Middleware(LoggingMiddleware, logging_service=get_logging_service())]
 
 
 @asynccontextmanager
@@ -38,6 +44,7 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     swagger_ui_parameters={"defaultModelsExpandDepth": 0, "docExpansion": None},
     lifespan=lifespan,
+    middleware=middleware,
 )
 
 # Set CORS middleware
@@ -54,6 +61,7 @@ app.add_middleware(
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):
     """Global handler for custom application exceptions"""
+    await get_logging_service().log_api_exception(exc)
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException
+from app.core.logging_service import BaseLoggingService
 from app.domains.process.process_model import Process
 from app.domains.resource.resource_model import Resource
 from app.domains.resource.resource_schemas import ResourceCreate, ResourceUpdate
@@ -17,13 +18,14 @@ from app.domains.shared.base_service import BaseService
 class ResourceService(BaseService):
     """Service for resource-related operations"""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
         """Initialize the service with a database session
 
         Args:
             session: SQLAlchemy async session for database operations
+            logging_service: Service for logging operations
         """
-        super().__init__(session)
+        super().__init__(session, logging_service)
 
     async def create_resource(self, resource_data: ResourceCreate) -> Resource:
         """
@@ -55,8 +57,19 @@ class ResourceService(BaseService):
         # Finally commit all
         await self.session.commit()
 
-        # refresh the resource to get the id
+        # refresh the resource to get the latest data
         await self.session.refresh(db_resource)
+
+        # Log the creation event
+        await self.logging_service.log_business_event(
+            "resource_created",
+            {
+                "resource_id": db_resource.id,
+                "title": db_resource.title,
+                "created_by": db_resource.created_by_id,
+                "process_ids": resource_data.process_ids,
+            },
+        )
 
         # return the resource
         return db_resource
@@ -89,6 +102,16 @@ class ResourceService(BaseService):
         # Convert the result to a list of resources
         resources = list(result.scalars().all())
 
+        # Log the retrieval event
+        await self.logging_service.log_business_event(
+            "resources_retrieved",
+            {
+                "count": len(resources),
+                "offset": offset,
+                "limit": limit,
+            },
+        )
+
         # return the resources
         return resources
 
@@ -120,6 +143,14 @@ class ResourceService(BaseService):
         resource = result.scalars().first()
         if not resource:
             raise NotFoundException(f"Resource with ID {resource_id} not found")
+
+        # Log the retrieval event
+        await self.logging_service.log_business_event(
+            "resource_retrieved",
+            {
+                "resource_id": resource_id,
+            },
+        )
 
         # return the resource
         return resource
@@ -161,8 +192,18 @@ class ResourceService(BaseService):
         # Finally commit all
         await self.session.commit()
 
-        # refresh the resource to get the id
+        # refresh the resource to get the latest data
         await self.session.refresh(resource)
+
+        # Log the update event
+        await self.logging_service.log_business_event(
+            "resource_updated",
+            {
+                "resource_id": resource_id,
+                "updated_fields": update_data,
+                "process_ids": resource_data.process_ids,
+            },
+        )
 
         # return the resource
         return resource
@@ -193,6 +234,14 @@ class ResourceService(BaseService):
 
         # Finally commit all
         await self.session.commit()
+
+        # Log the deletion event
+        await self.logging_service.log_business_event(
+            "resource_deleted",
+            {
+                "resource_id": resource_id,
+            },
+        )
 
     async def _update_relationships(
         self, resource: Resource, process_ids: Optional[List[int]]

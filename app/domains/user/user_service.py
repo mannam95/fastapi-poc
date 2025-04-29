@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundException
+from app.core.logging_service import BaseLoggingService
 from app.domains.shared.base_service import BaseService
 from app.domains.user.user_model import User
 from app.domains.user.user_schemas import UserCreate, UserUpdate
@@ -16,13 +17,14 @@ from app.domains.user.user_schemas import UserCreate, UserUpdate
 class UserService(BaseService):
     """Service for user-related operations"""
 
-    def __init__(self, session: AsyncSession):
-        """Initialize the service with a database session
+    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
+        """Initialize the service with a database session and logging service
 
         Args:
             session: SQLAlchemy async session for database operations
+            logging_service: Service for logging operations
         """
-        super().__init__(session)
+        super().__init__(session, logging_service)
 
     async def create_user(self, user_data: UserCreate) -> User:
         """
@@ -49,6 +51,16 @@ class UserService(BaseService):
         # Refresh the user to get the latest data
         await self.session.refresh(db_user)
 
+        # Log the creation
+        await self.logging_service.log_business_event(
+            "user_created",
+            {
+                "user_id": db_user.id,
+                "title": db_user.title,
+                "created_at": db_user.created_at.isoformat(),
+            },
+        )
+
         # Return the user
         return db_user
 
@@ -72,6 +84,16 @@ class UserService(BaseService):
         # Convert the result to a list of users
         users = list(result.scalars().all())
 
+        # Log the retrieval
+        await self.logging_service.log_business_event(
+            "users_retrieved",
+            {
+                "count": len(users),
+                "offset": offset,
+                "limit": limit,
+            },
+        )
+
         # Return the users
         return users
 
@@ -93,6 +115,15 @@ class UserService(BaseService):
         user = await self.session.get(User, user_id)
         if not user:
             raise NotFoundException(f"User with ID {user_id} not found")
+
+        # Log the retrieval
+        await self.logging_service.log_business_event(
+            "user_retrieved",
+            {
+                "user_id": user_id,
+                "title": user.title,
+            },
+        )
 
         # Return the user
         return user
@@ -117,6 +148,9 @@ class UserService(BaseService):
         if not user:
             raise NotFoundException(f"User with ID {user_id} not found")
 
+        # Store old values for logging
+        old_title = user.title
+
         # Get the update data
         update_data = user_data.model_dump(exclude_unset=True)
 
@@ -130,6 +164,16 @@ class UserService(BaseService):
 
         # Refresh the user to get the latest data
         await self.session.refresh(user)
+
+        # Log the update
+        await self.logging_service.log_business_event(
+            "user_updated",
+            {
+                "user_id": user_id,
+                "old_title": old_title,
+                "new_title": user.title,
+            },
+        )
 
         # Return the user
         return user
@@ -150,8 +194,20 @@ class UserService(BaseService):
         if not user:
             raise NotFoundException(f"User with ID {user_id} not found")
 
+        # Store values for logging
+        title = user.title
+
         # Delete the user
         await self.session.delete(user)
 
         # Commit all
         await self.session.commit()
+
+        # Log the deletion
+        await self.logging_service.log_business_event(
+            "user_deleted",
+            {
+                "user_id": user_id,
+                "title": title,
+            },
+        )

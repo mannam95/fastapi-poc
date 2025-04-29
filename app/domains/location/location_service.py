@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException
+from app.core.logging_service import BaseLoggingService
 from app.domains.location.location_model import Location
 from app.domains.location.location_schemas import LocationCreate, LocationUpdate
 from app.domains.process.process_model import Process
@@ -17,13 +18,14 @@ from app.domains.shared.base_service import BaseService
 class LocationService(BaseService):
     """Service for location-related operations"""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
         """Initialize the service with a database session
 
         Args:
             session: SQLAlchemy async session for database operations
+            logging_service: Service for logging operations
         """
-        super().__init__(session)
+        super().__init__(session, logging_service)
 
     async def create_location(self, location_data: LocationCreate) -> Location:
         """
@@ -58,6 +60,17 @@ class LocationService(BaseService):
         # refresh the location to get the latest data
         await self.session.refresh(db_location)
 
+        # Log the creation event
+        await self.logging_service.log_business_event(
+            "location_created",
+            {
+                "location_id": db_location.id,
+                "title": db_location.title,
+                "created_by": db_location.created_by_id,
+                "process_ids": location_data.process_ids,
+            },
+        )
+
         # return the location
         return db_location
 
@@ -88,6 +101,16 @@ class LocationService(BaseService):
 
         # Convert the result to a list of locations
         locations = list(result.scalars().all())
+
+        # Log the retrieval event
+        await self.logging_service.log_business_event(
+            "locations_retrieved",
+            {
+                "count": len(locations),
+                "offset": offset,
+                "limit": limit,
+            },
+        )
 
         # return the locations
         return locations
@@ -120,6 +143,14 @@ class LocationService(BaseService):
         location = result.scalars().first()
         if not location:
             raise NotFoundException(f"Location with ID {location_id} not found")
+
+        # Log the retrieval event
+        await self.logging_service.log_business_event(
+            "location_retrieved",
+            {
+                "location_id": location_id,
+            },
+        )
 
         # return the location
         return location
@@ -164,6 +195,16 @@ class LocationService(BaseService):
         # refresh the location to get the latest data
         await self.session.refresh(location)
 
+        # Log the update event
+        await self.logging_service.log_business_event(
+            "location_updated",
+            {
+                "location_id": location_id,
+                "updated_fields": update_data,
+                "process_ids": location_data.process_ids,
+            },
+        )
+
         # return the location
         return location
 
@@ -193,6 +234,14 @@ class LocationService(BaseService):
 
         # Finally commit all
         await self.session.commit()
+
+        # Log the deletion event
+        await self.logging_service.log_business_event(
+            "location_deleted",
+            {
+                "location_id": location_id,
+            },
+        )
 
     async def _update_relationships(
         self, location: Location, process_ids: Optional[List[int]]
