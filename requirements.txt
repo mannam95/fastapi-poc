@@ -35,3 +35,9 @@ debugpy==1.8.14
 
 # logging
 loguru==0.7.3
+
+# locust
+locust==2.36.2
+
+# prometheus
+prometheus-fastapi-instrumentator==7.1.0

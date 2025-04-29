@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.middleware import Middleware
 
 from app.api.router import api_router
@@ -46,6 +47,9 @@ app = FastAPI(
     lifespan=lifespan,
     middleware=middleware,
 )
+
+# Initialize Prometheus Instrumentator
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 # Set CORS middleware
 app.add_middleware(
