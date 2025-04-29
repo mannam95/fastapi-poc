@@ -55,8 +55,8 @@ nuke:
 	docker compose -f docker/docker-compose.test.yml down
 	docker volume prune -f
 	docker system prune -f
-	sudo rm -rf postgres-data
-	sudo rm -rf test-postgres-data
+	sudo rm -rf postgres-data docker/postgres-data
+	sudo rm -rf test-postgres-data docker/test-postgres-data
 	sudo rm -rf .pytest_cache
 	sudo rm -rf .coverage
 	sudo find . -type d -name __pycache__ -exec rm -rf {} +
