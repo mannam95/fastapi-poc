@@ -8,13 +8,24 @@ from app.domains.department.department_schemas import (
     DepartmentResponse,
     DepartmentUpdate,
 )
+from app.domains.shared.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 
 # CRUD operations
 
 
-@router.post("/", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=DepartmentResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def create_department(service: DepartmentServiceDep, department_in: DepartmentCreate):
     """
     Create a new department.
@@ -52,7 +63,16 @@ async def read_departments(
     return await service.get_departments(offset, limit)
 
 
-@router.get("/{department_id}", response_model=DepartmentResponse)
+@router.get(
+    "/{department_id}",
+    response_model=DepartmentResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Department not found",
+        },
+    },
+)
 async def read_department(
     department_id: int,
     service: DepartmentServiceDep,
@@ -70,7 +90,20 @@ async def read_department(
     return await service.get_department_by_id(department_id)
 
 
-@router.put("/{department_id}", response_model=DepartmentResponse)
+@router.put(
+    "/{department_id}",
+    response_model=DepartmentResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Department not found",
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def update_department(
     department_id: int,
     department_in: DepartmentUpdate,
@@ -92,11 +125,17 @@ async def update_department(
     return await service.update_department(department_id, department_in)
 
 
-@router.delete("/{department_id}", status_code=status.HTTP_200_OK)
-async def delete_department(
-    department_id: int,
-    service: DepartmentServiceDep,
-):
+@router.delete(
+    "/{department_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Department not found",
+        },
+    },
+)
+async def delete_department(department_id: int, service: DepartmentServiceDep):
     """
     Delete a department.
 

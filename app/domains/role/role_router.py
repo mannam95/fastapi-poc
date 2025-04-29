@@ -7,11 +7,22 @@ from fastapi import APIRouter, Query, status
 
 from app.domains.role.role_dependencies import RoleServiceDep
 from app.domains.role.role_schemas import RoleCreate, RoleResponse, RoleUpdate
+from app.domains.shared.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 
 
-@router.post("/", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=RoleResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def create_role(
     role_data: RoleCreate,
     service: RoleServiceDep,
@@ -52,7 +63,16 @@ async def get_roles(
     return await service.get_roles(offset=offset, limit=limit)
 
 
-@router.get("/{role_id}", response_model=RoleResponse)
+@router.get(
+    "/{role_id}",
+    response_model=RoleResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Role not found",
+        },
+    },
+)
 async def get_role(
     role_id: int,
     service: RoleServiceDep,
@@ -70,7 +90,20 @@ async def get_role(
     return await service.get_role_by_id(role_id)
 
 
-@router.put("/{role_id}", response_model=RoleResponse)
+@router.put(
+    "/{role_id}",
+    response_model=RoleResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Role not found",
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def update_role(
     role_id: int,
     role_data: RoleUpdate,
@@ -92,11 +125,17 @@ async def update_role(
     return await service.update_role(role_id, role_data)
 
 
-@router.delete("/{role_id}", status_code=status.HTTP_200_OK)
-async def delete_role(
-    role_id: int,
-    service: RoleServiceDep,
-):
+@router.delete(
+    "/{role_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Role not found",
+        },
+    },
+)
+async def delete_role(role_id: int, service: RoleServiceDep):
     """
     Delete a role.
 

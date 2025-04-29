@@ -53,7 +53,9 @@ class ServiceMetaclass(type):
                 exception_to_raise = e
             except IntegrityError as e:
                 # Handle constraint violations
-                exception_to_raise = RelationshipException(f"Integrity error: {str(e)}")
+                exception_to_raise = RelationshipException(
+                    f"Integrity error most likely due to foreign key constraint violation: {str(e)}"
+                )
             except SQLAlchemyError as e:
                 # Handle all other database errors that occur at the SQLAlchemy level
                 exception_to_raise = DatabaseException(f"SQLAlchemyError database error: {str(e)}")

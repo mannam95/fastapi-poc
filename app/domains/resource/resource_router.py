@@ -8,13 +8,24 @@ from app.domains.resource.resource_schemas import (
     ResourceResponse,
     ResourceUpdate,
 )
+from app.domains.shared.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 
 # CRUD operations
 
 
-@router.post("/", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=ResourceResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def create_resource(service: ResourceServiceDep, resource_in: ResourceCreate):
     """
     Create a new resource.
@@ -52,11 +63,17 @@ async def read_resources(
     return await service.get_resources(offset, limit)
 
 
-@router.get("/{resource_id}", response_model=ResourceResponse)
-async def read_resource(
-    resource_id: int,
-    service: ResourceServiceDep,
-):
+@router.get(
+    "/{resource_id}",
+    response_model=ResourceResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Resource not found",
+        },
+    },
+)
+async def read_resource(resource_id: int, service: ResourceServiceDep):
     """
     Get a single resource by ID.
 
@@ -70,11 +87,22 @@ async def read_resource(
     return await service.get_resource_by_id(resource_id)
 
 
-@router.put("/{resource_id}", response_model=ResourceResponse)
+@router.put(
+    "/{resource_id}",
+    response_model=ResourceResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Resource not found",
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def update_resource(
-    resource_id: int,
-    resource_in: ResourceUpdate,
-    service: ResourceServiceDep,
+    resource_id: int, resource_in: ResourceUpdate, service: ResourceServiceDep
 ):
     """
     Update an existing resource.
@@ -92,11 +120,17 @@ async def update_resource(
     return await service.update_resource(resource_id, resource_in)
 
 
-@router.delete("/{resource_id}", status_code=status.HTTP_200_OK)
-async def delete_resource(
-    resource_id: int,
-    service: ResourceServiceDep,
-):
+@router.delete(
+    "/{resource_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Resource not found",
+        },
+    },
+)
+async def delete_resource(resource_id: int, service: ResourceServiceDep):
     """
     Delete a resource.
 

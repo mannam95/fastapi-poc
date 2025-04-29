@@ -8,13 +8,24 @@ from app.domains.location.location_schemas import (
     LocationResponse,
     LocationUpdate,
 )
+from app.domains.shared.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 
 # CRUD operations
 
 
-@router.post("/", response_model=LocationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=LocationResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def create_location(service: LocationServiceDep, location_in: LocationCreate):
     """
     Create a new location.
@@ -52,7 +63,16 @@ async def read_locations(
     return await service.get_locations(offset, limit)
 
 
-@router.get("/{location_id}", response_model=LocationResponse)
+@router.get(
+    "/{location_id}",
+    response_model=LocationResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Location not found",
+        },
+    },
+)
 async def read_location(
     location_id: int,
     service: LocationServiceDep,
@@ -70,7 +90,20 @@ async def read_location(
     return await service.get_location_by_id(location_id)
 
 
-@router.put("/{location_id}", response_model=LocationResponse)
+@router.put(
+    "/{location_id}",
+    response_model=LocationResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Location not found",
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def update_location(
     location_id: int,
     location_in: LocationUpdate,
@@ -92,11 +125,17 @@ async def update_location(
     return await service.update_location(location_id, location_in)
 
 
-@router.delete("/{location_id}", status_code=status.HTTP_200_OK)
-async def delete_location(
-    location_id: int,
-    service: LocationServiceDep,
-):
+@router.delete(
+    "/{location_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Location not found",
+        },
+    },
+)
+async def delete_location(location_id: int, service: LocationServiceDep):
     """
     Delete a location.
 

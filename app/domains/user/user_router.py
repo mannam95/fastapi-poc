@@ -2,17 +2,29 @@ from typing import List
 
 from fastapi import APIRouter, status
 
+from app.domains.shared.exception_response_schemas import ErrorResponse
 from app.domains.user.user_dependencies import UserServiceDep
 from app.domains.user.user_schemas import UserCreate, UserResponse, UserUpdate
 
 router = APIRouter()
 
 
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def create_user(service: UserServiceDep, user_in: UserCreate):
+@router.post(
+    "/",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
+async def create_user(
+    user_in: UserCreate,
+    service: UserServiceDep,
+):
     """
-    Create a new user.
-
     Creates a user with the specified title.
     Users serve as creators for other entities in the system.
 
@@ -45,7 +57,16 @@ async def read_users(
     return await service.get_users(offset, limit)
 
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get(
+    "/{user_id}",
+    response_model=UserResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "User not found",
+        },
+    },
+)
 async def read_user(
     user_id: int,
     service: UserServiceDep,
@@ -62,7 +83,20 @@ async def read_user(
     return await service.get_user_by_id(user_id)
 
 
-@router.put("/{user_id}", response_model=UserResponse)
+@router.put(
+    "/{user_id}",
+    response_model=UserResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "User not found",
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def update_user(
     user_id: int,
     user_in: UserUpdate,
@@ -83,11 +117,17 @@ async def update_user(
     return await service.update_user(user_id, user_in)
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
-async def delete_user(
-    user_id: int,
-    service: UserServiceDep,
-):
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "User not found",
+        },
+    },
+)
+async def delete_user(user_id: int, service: UserServiceDep):
     """
     Delete a user.
 

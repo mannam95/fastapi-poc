@@ -8,11 +8,22 @@ from app.domains.process.process_schemas import (
     ProcessResponse,
     ProcessUpdate,
 )
+from app.domains.shared.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 
 
-@router.post("/", response_model=ProcessResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=ProcessResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
 async def create_process(service: ProcessServiceDep, process_in: ProcessCreate):
     """
     Create a new process.
@@ -50,11 +61,17 @@ async def read_processes(
     return await service.get_processes(offset, limit)
 
 
-@router.get("/{process_id}", response_model=ProcessResponse)
-async def read_process(
-    process_id: int,
-    service: ProcessServiceDep,
-):
+@router.get(
+    "/{process_id}",
+    response_model=ProcessResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Process not found",
+        },
+    },
+)
+async def read_process(process_id: int, service: ProcessServiceDep):
     """
     Get a single process by ID.
 
@@ -68,12 +85,21 @@ async def read_process(
     return await service.get_process_by_id(process_id)
 
 
-@router.put("/{process_id}", response_model=ProcessResponse)
-async def update_process(
-    process_id: int,
-    process_in: ProcessUpdate,
-    service: ProcessServiceDep,
-):
+@router.put(
+    "/{process_id}",
+    response_model=ProcessResponse,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Process not found",
+        },
+        400: {
+            "model": ErrorResponse,
+            "description": "Most likely due to foreign key constraint violation",
+        },
+    },
+)
+async def update_process(process_id: int, process_in: ProcessUpdate, service: ProcessServiceDep):
     """
     Update an existing process.
 
@@ -90,11 +116,17 @@ async def update_process(
     return await service.update_process(process_id, process_in)
 
 
-@router.delete("/{process_id}", status_code=status.HTTP_200_OK)
-async def delete_process(
-    process_id: int,
-    service: ProcessServiceDep,
-):
+@router.delete(
+    "/{process_id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Process not found",
+        },
+    },
+)
+async def delete_process(process_id: int, service: ProcessServiceDep):
     """
     Delete a process.
 
