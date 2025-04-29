@@ -1,17 +1,32 @@
 services:
-  api:
+  fast-api-poc:
+    image: fast-api-poc
     restart: always
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../
+      dockerfile: docker/Dockerfile
     ports:
-      - '8000:8000'
-      - '7000:7000'
+      - "8000:8000"
+      - "7000:7000"
     # command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     command:
-      ['python', '-m', 'debugpy', '--listen', '0.0.0.0:7000', '-m', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--reload']
+      [
+        "python",
+        "-m",
+        "debugpy",
+        "--listen",
+        "0.0.0.0:7000",
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
     volumes:
-      - .:/app
+      - ../:/app
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,15 +48,15 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=process_management
     ports:
-      - '5432:5432'
+      - "5432:5432"
     expose:
-      - '5432'
+      - "5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data:cached
     networks:
       - app-network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5

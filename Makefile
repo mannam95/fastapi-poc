@@ -2,60 +2,57 @@
 
 # Docker commands
 up:
-	docker compose up
+	docker compose -f docker/docker-compose.yml up
 
 down:
-	docker compose down
+	docker compose -f docker/docker-compose.yml down
 
 logs:
-	docker compose logs -f
+	docker compose -f docker/docker-compose.yml logs -f
 
 build:
-	docker compose build
+	docker compose -f docker/docker-compose.yml build
 
 # Test commands
 test-build:
-	docker compose -f docker-compose.test.yml build
+	docker compose -f docker/docker-compose.test.yml build
 
 test:
-	docker compose -f docker-compose.test.yml run --rm test-api pytest
+	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest
 
 test-cov:
-	docker compose -f docker-compose.test.yml run --rm test-api pytest --cov=app --cov-report=term-missing
+	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest --cov=app --cov-report=term-missing
 
 test-unit:
-	docker compose -f docker-compose.test.yml run --rm test-api pytest -m unit
+	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest -m unit
 
 test-integration:
-	docker compose -f docker-compose.test.yml run --rm test-api pytest -m integration
+	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest -m integration
 
 # Database commands
 migrations:
-	docker compose run --rm api alembic revision --autogenerate -m "$(m)"
+	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc alembic revision --autogenerate -m "$(m)"
 
 migrate:
-	docker compose run --rm api alembic upgrade head
+	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc alembic upgrade head
 
 # Code quality
 lint:
-	docker compose run --rm api black app tests
-	docker compose run --rm api isort app tests
-	docker compose run --rm api flake8 app tests
+	docker compose -f docker/docker-compose.yml run --rm fast-api-poc black app tests
+	docker compose -f docker/docker-compose.yml run --rm fast-api-poc isort app tests
+	docker compose -f docker/docker-compose.yml run --rm fast-api-poc flake8 app tests
 
 format:
-	docker compose run --rm api black app tests
-	docker compose run --rm api isort app tests
+	docker compose -f docker/docker-compose.yml run --rm fast-api-poc black app tests
+	docker compose -f docker/docker-compose.yml run --rm fast-api-poc isort app tests
 
 mypy:
-	docker compose run --rm api mypy app
+	docker compose -f docker/docker-compose.yml run --rm fast-api-poc mypy app
 
-# Shell
-shell:
-	docker compose run --rm api python
 
-clean:
-	docker compose down
-	docker compose -f docker-compose.test.yml down
+nuke:
+	docker compose -f docker/docker-compose.yml down
+	docker compose -f docker/docker-compose.test.yml down
 	docker volume prune -f
 	docker system prune -f
 	sudo rm -rf postgres-data
@@ -92,5 +89,4 @@ help:
 	@echo "  lint            Run linters"
 	@echo "  format          Format code"
 	@echo "  mypy            Run type checking"
-	@echo "  shell           Open Python shell"
-	@echo "  clean           Remove temporary files"
+	@echo "  nuke            Delete all temporary files"

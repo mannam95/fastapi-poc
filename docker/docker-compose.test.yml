@@ -1,13 +1,14 @@
 services:
-  test-api:
+  test-fast-api-poc:
+    image: test-fast-api-poc
     restart: always
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../
+      dockerfile: docker/Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - ../:/app
     depends_on:
       test-postgres:
         condition: service_healthy
