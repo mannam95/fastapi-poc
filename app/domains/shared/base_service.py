@@ -7,10 +7,10 @@ It includes common functionality like relationship management and database opera
 
 from typing import Any, List, Protocol, Type, TypeVar
 
-from fastapi import HTTPException
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm.collections import InstrumentedList
+
+from app.core.exception_handling_service import ExceptionHandlingServiceBase
+from app.core.exceptions import RelationshipException
 
 
 # Define a protocol for models with ID
@@ -23,22 +23,14 @@ ModelType = TypeVar("ModelType", bound=HasID)
 T = TypeVar("T")
 
 
-class BaseService:
+class BaseService(ExceptionHandlingServiceBase):
     """
-    Base service class for domain services.
+    Base class for all service classes providing common functionality.
 
-    This class provides common functionality for database operations,
-    entity retrieval, and relationship management.
+    This class extends the ExceptionHandlingServiceBase and adds common
+    methods for CRUD operations and relationship management.
+    All service classes should inherit from this class.
     """
-
-    def __init__(self, session: AsyncSession):
-        """
-        Initialize the service with a database session.
-
-        Args:
-            session: SQLAlchemy async session for database operations
-        """
-        self.session = session
 
     async def get_entities_by_ids(
         self, model_class: Type[ModelType], ids: List[int]
@@ -57,77 +49,68 @@ class BaseService:
             List of entity instances corresponding to the provided IDs
 
         Raises:
-            HTTPException: If any of the requested IDs don't exist in the database
+            NotFoundException: If any of the requested IDs don't exist in the database
         """
-        try:
-            # Get entities by their IDs
-            result = await self.session.execute(select(model_class).where(model_class.id.in_(ids)))
+        # Get entities by their IDs
+        result = await self.session.execute(select(model_class).where(model_class.id.in_(ids)))
 
-            # Convert the result to a list of entities
-            entities = list(result.scalars().all())
+        # Convert the result to a list of entities
+        entities = list(result.scalars().all())
 
-            # Check if any IDs were not found
-            found_ids = {entity.id for entity in entities}
+        # Check if any IDs were not found
+        found_ids = {entity.id for entity in entities}
 
-            # Determine which IDs were not found
-            missing_ids = set(ids) - found_ids
+        # Determine which IDs were not found
+        missing_ids = set(ids) - found_ids
 
-            if missing_ids:
-                entity_name = model_class.__name__
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Some {entity_name} IDs not found: {missing_ids}",
-                )
+        if missing_ids:
+            entity_name = model_class.__name__
+            raise RelationshipException(f"Some {entity_name} IDs not found: {missing_ids}")
 
-            return entities
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        return entities
 
     async def update_many_to_many_relationship(
-        self,
-        current_collection: InstrumentedList,
-        model_class: Type[ModelType],
-        new_ids: List[int],
+        self, relationship_collection: List[Any], entity_class: Type[Any], related_ids: List[int]
     ) -> None:
         """
-        Update a many-to-many relationship collection efficiently.
+        Update a many-to-many relationship collection.
 
-        This method updates a SQLAlchemy relationship collection by adding new entities
-        and removing ones that are no longer needed, without replacing the entire collection.
-        This is more efficient than clearing and rebuilding the collection when only a few
-        items need to change.
+        Efficiently updates a many-to-many relationship by adding new relations
+        and removing no longer needed ones.
 
         Args:
-            current_collection: The current relationship collection (e.g., role.processes)
-            model_class: The SQLAlchemy model class of the related entities
-            new_ids: The new IDs to set in the relationship
+            relationship_collection: The collection to update (e.g., department.processes)
+            entity_class: The class of the related entity (e.g., Process)
+            related_ids: List of IDs to set as the new relationship values
 
         Raises:
-            HTTPException: If any of the new_ids don't correspond to existing entities
+            RelationshipException: If related entity doesn't exist
         """
-        if not new_ids:
-            # If empty list provided, clear all relationships
-            current_collection.clear()
-            return
+        # Get current IDs for comparison
+        current_ids = [item.id for item in relationship_collection]
 
-        # Get current IDs in the relationship
-        current_ids = {entity.id for entity in current_collection}
+        # Determine what needs to be added or removed
+        ids_to_add = set(related_ids) - set(current_ids)
+        ids_to_remove = set(current_ids) - set(related_ids)
 
-        # Determine which IDs to add
-        ids_to_add = set(new_ids) - current_ids
-
-        # Determine which IDs to remove
-        ids_to_remove = current_ids - set(new_ids)
-
-        # Only fetch entities that need to be added
-        if ids_to_add:
-            entities_to_add = await self.get_entities_by_ids(model_class, list(ids_to_add))
-            for entity in entities_to_add:
-                current_collection.append(entity)
-
-        # Remove entities that are no longer needed
+        # Remove items not in the new list
         if ids_to_remove:
-            current_collection[:] = [
-                entity for entity in current_collection if entity.id not in ids_to_remove
-            ]
+            items_to_remove = [item for item in relationship_collection if item.id in ids_to_remove]
+            for item in items_to_remove:
+                relationship_collection.remove(item)
+
+        # Add new items
+        if ids_to_add:
+            # Fetch all new items at once
+            result = await self.session.execute(
+                select(entity_class).where(entity_class.id.in_(ids_to_add))
+            )
+            items_to_add = result.scalars().all()
+
+            # Check if all items were found
+            found_ids = {item.id for item in items_to_add}
+            missing_ids = ids_to_add - found_ids
+            if missing_ids:
+                raise RelationshipException(
+                    f"Some {entity_class.__name__} entities not found: {missing_ids}"
+                )

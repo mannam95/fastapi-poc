@@ -23,6 +23,10 @@ async def create_department(service: DepartmentServiceDep, department_in: Depart
     associations to processes.
 
     Returns the newly created department with all details.
+
+    Raises:
+        DatabaseException: If there's a database error
+        RelationshipException: If related entities don't exist
     """
     return await service.create_department(department_in)
 
@@ -41,6 +45,9 @@ async def read_departments(
         limit: Maximum number of records to return
 
     Returns a list of departments with their details and process relationships.
+
+    Raises:
+        DatabaseException: If there's a database error
     """
     return await service.get_departments(offset, limit)
 
@@ -56,7 +63,9 @@ async def read_department(
     Retrieves detailed information about a specific department,
     including its creator and associated processes.
 
-    Raises 404 if department not found.
+    Raises:
+        NotFoundException: If department not found
+        DatabaseException: If there's a database error
     """
     return await service.get_department_by_id(department_id)
 
@@ -74,7 +83,11 @@ async def update_department(
     Supports partial updates (only specified fields will be updated).
 
     Returns the updated department with all details.
-    Raises 404 if department not found.
+
+    Raises:
+        NotFoundException: If department not found
+        DatabaseException: If there's a database error
+        RelationshipException: If there's an issue with relationship operations
     """
     return await service.update_department(department_id, department_in)
 
@@ -91,7 +104,10 @@ async def delete_department(
     This operation cannot be undone.
 
     Returns a success message.
-    Raises 404 if department not found.
+
+    Raises:
+        NotFoundException: If department not found
+        DatabaseException: If there's a database error
     """
     await service.delete_department(department_id)
     return {"message": "Department deleted successfully"}

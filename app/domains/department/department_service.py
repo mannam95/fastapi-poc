@@ -3,11 +3,11 @@
 
 from typing import List, Optional
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import NotFoundException
 from app.domains.department.department_model import Department
 from app.domains.department.department_schemas import DepartmentCreate, DepartmentUpdate
 from app.domains.process.process_model import Process
@@ -40,31 +40,28 @@ class DepartmentService(BaseService):
             Department: The newly created department with all relationships loaded
 
         Raises:
-            HTTPException: If there's a database error or related entities don't exist
+            DatabaseException: If there's a database error
+            RelationshipException: If related entities don't exist
         """
-        try:
-            # Create new Department instance from input data
-            db_department = Department(
-                title=department_data.title, created_by_id=department_data.created_by_id
-            )
+        # Create new Department instance from input data
+        db_department = Department(
+            title=department_data.title, created_by_id=department_data.created_by_id
+        )
 
-            # Add the department to the database to get an ID
-            self.session.add(db_department)
+        # Add the department to the database to get an ID
+        self.session.add(db_department)
 
-            # Handle relationships
-            await self._update_relationships(db_department, department_data.process_ids)
+        # Handle relationships
+        await self._update_relationships(db_department, department_data.process_ids)
 
-            # Finally commit all
-            await self.session.commit()
+        # Finally commit all
+        await self.session.commit()
 
-            # refresh the department to get the latest data
-            await self.session.refresh(db_department)
+        # refresh the department to get the latest data
+        await self.session.refresh(db_department)
 
-            # return the department
-            return db_department
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # return the department
+        return db_department
 
     async def get_departments(self, offset: int = 0, limit: int = 100) -> List[Department]:
         """
@@ -79,6 +76,9 @@ class DepartmentService(BaseService):
 
         Returns:
             List[Department]: List of department objects with relationships loaded
+
+        Raises:
+            DatabaseException: If there's a database error
         """
         # Get the departments with associated data
         result = await self.session.execute(
@@ -108,7 +108,8 @@ class DepartmentService(BaseService):
             Department: The requested department with all relationships loaded
 
         Raises:
-            HTTPException: If department not found (404)
+            NotFoundException: If department not found
+            DatabaseException: If there's a database error
         """
         # Get the department by ID with associated data
         result = await self.session.execute(
@@ -120,7 +121,7 @@ class DepartmentService(BaseService):
         # Convert the result to a single department
         department = result.scalars().first()
         if not department:
-            raise HTTPException(status_code=404, detail="Department not found")
+            raise NotFoundException(f"Department with ID {department_id} not found")
 
         # return the department
         return department
@@ -143,33 +144,32 @@ class DepartmentService(BaseService):
             Department: The updated department with all relationships
 
         Raises:
-            HTTPException: If department not found (404) or database error (500)
+            NotFoundException: If department not found
+            DatabaseException: If there's a database error
+            RelationshipException: If there's an issue with relationship operations
         """
         # Get the department by ID
         department = await self.session.get(Department, department_id)
         if not department:
-            raise HTTPException(status_code=404, detail="Department not found")
-        try:
-            # Update department fields
-            update_data = department_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
-            for key, value in update_data.items():
-                if value is not None:  # Only update if the value is not None
-                    setattr(department, key, value)
+            raise NotFoundException(f"Department with ID {department_id} not found")
 
-            # Handle relationships
-            await self._update_relationships(department, department_data.process_ids)
+        # Update department fields
+        update_data = department_data.model_dump(exclude={"process_ids"}, exclude_unset=True)
+        for key, value in update_data.items():
+            if value is not None:  # Only update if the value is not None
+                setattr(department, key, value)
 
-            # Finally commit all
-            await self.session.commit()
+        # Handle relationships
+        await self._update_relationships(department, department_data.process_ids)
 
-            # refresh the department to get the latest data
-            await self.session.refresh(department)
+        # Finally commit all
+        await self.session.commit()
 
-            # return the department
-            return department
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # refresh the department to get the latest data
+        await self.session.refresh(department)
+
+        # return the department
+        return department
 
     async def delete_department(self, department_id: int) -> None:
         """
@@ -181,24 +181,23 @@ class DepartmentService(BaseService):
             department_id: Database ID of the department to delete
 
         Raises:
-            HTTPException: If department not found (404) or database error (500)
+            NotFoundException: If department not found
+            DatabaseException: If there's a database error
         """
         # Get the department by ID
         department = await self.session.get(Department, department_id)
+
         if not department:
-            raise HTTPException(status_code=404, detail="Department not found")
-        try:
-            # Clear all relationships
-            department.processes = []
+            raise NotFoundException(f"Department with ID {department_id} not found")
 
-            # Now delete the department
-            await self.session.delete(department)
+        # Clear all relationships
+        department.processes = []
 
-            # Finally commit all
-            await self.session.commit()
-        except Exception as e:
-            await self.session.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+        # Now delete the department
+        await self.session.delete(department)
+
+        # Finally commit all
+        await self.session.commit()
 
     async def _update_relationships(
         self, department: Department, process_ids: Optional[List[int]] = None
@@ -213,9 +212,9 @@ class DepartmentService(BaseService):
         Args:
             department: The department to update
             process_ids: List of process IDs to associate with the department
+
+        Raises:
+            RelationshipException: If there's an issue with the relationship operations
         """
         if process_ids is not None:
             await self.update_many_to_many_relationship(department.processes, Process, process_ids)
-
-        await self.session.commit()
-        await self.session.refresh(department)
