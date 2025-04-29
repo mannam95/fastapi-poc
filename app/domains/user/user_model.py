@@ -1,5 +1,7 @@
-from sqlalchemy import Column, DateTime, Integer, String
-from sqlalchemy.orm import relationship
+from datetime import datetime
+
+from sqlalchemy import DateTime, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -15,9 +17,9 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    title = Column(String, nullable=False)
-    created_at = Column(DateTime, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     # Relationships for created entities
     created_processes = relationship("Process", back_populates="created_by", lazy="selectin")

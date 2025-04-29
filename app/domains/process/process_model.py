@@ -1,5 +1,7 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
-from sqlalchemy.orm import relationship
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -15,12 +17,14 @@ class Process(Base):
 
     __tablename__ = "process"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    title = Column(String, nullable=False)
-    description = Column(String, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )
     # Foreign key to User who created this process
-    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relationship to User
     created_by = relationship("User", back_populates="created_processes", lazy="selectin")

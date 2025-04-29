@@ -10,10 +10,13 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
-Base = declarative_base()
 SCHEMA = "public"  # Default PostgreSQL schema
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 class DatabaseSessionManager:

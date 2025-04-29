@@ -12,7 +12,7 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always"
   },
-  // "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.typeCheckingMode": "basic",
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "python.testing.pytestArgs": ["tests"],
@@ -30,5 +30,12 @@
   },
   "black-formatter.args": [
     "--line-length", "100"
+  ],
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.args": [
+    "--disallow-untyped-defs=True",
+    "--disallow-untyped-calls=True",
+    "--check-untyped-defs=True",
+    "--no-implicit-optional=True"
   ]
 }

@@ -50,7 +50,7 @@ class DepartmentCreate(DepartmentBase):
     """
 
     created_by_id: int
-    process_ids: Optional[List[int]] = []
+    process_ids: List[int] = []
 
 
 class DepartmentUpdate(BaseModel):
@@ -61,7 +61,7 @@ class DepartmentUpdate(BaseModel):
     """
 
     title: Optional[str] = None
-    process_ids: Optional[List[int]] = []
+    process_ids: List[int] = []
 
 
 class DepartmentResponse(DepartmentBase):

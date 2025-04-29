@@ -1,5 +1,7 @@
+from datetime import datetime
+
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -24,12 +26,14 @@ class Department(Base):
 
     __tablename__ = "departments"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    title = Column(String, nullable=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )
 
     # Foreign key to User who created this department
-    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relationships
     created_by = relationship("User", back_populates="created_departments", lazy="selectin")

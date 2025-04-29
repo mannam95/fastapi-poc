@@ -50,7 +50,7 @@ class RoleCreate(RoleBase):
     """
 
     created_by_id: int
-    process_ids: Optional[List[int]] = []
+    process_ids: List[int] = []
 
 
 class RoleUpdate(BaseModel):
@@ -61,7 +61,7 @@ class RoleUpdate(BaseModel):
     """
 
     title: Optional[str] = None
-    process_ids: Optional[List[int]] = []
+    process_ids: List[int] = []
 
 
 class RoleResponse(RoleBase):

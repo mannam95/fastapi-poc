@@ -50,7 +50,7 @@ class LocationCreate(LocationBase):
     """
 
     created_by_id: int
-    process_ids: Optional[List[int]] = []
+    process_ids: List[int] = []
 
 
 class LocationUpdate(BaseModel):
@@ -61,7 +61,7 @@ class LocationUpdate(BaseModel):
     """
 
     title: Optional[str] = None
-    process_ids: Optional[List[int]] = []
+    process_ids: List[int] = []
 
 
 class LocationResponse(LocationBase):

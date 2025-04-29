@@ -81,10 +81,10 @@ class ProcessCreate(BaseModel):
     title: str
     description: Optional[str] = None
     created_by_id: int
-    department_ids: Optional[List[int]] = []
-    location_ids: Optional[List[int]] = []
-    resource_ids: Optional[List[int]] = []
-    role_ids: Optional[List[int]] = []
+    department_ids: List[int] = []
+    location_ids: List[int] = []
+    resource_ids: List[int] = []
+    role_ids: List[int] = []
 
     class Config:
         from_attributes = True
@@ -98,10 +98,10 @@ class ProcessUpdate(BaseModel):
 
     title: Optional[str] = None
     description: Optional[str] = None
-    department_ids: Optional[List[int]] = []
-    location_ids: Optional[List[int]] = []
-    resource_ids: Optional[List[int]] = []
-    role_ids: Optional[List[int]] = []
+    department_ids: List[int] = []
+    location_ids: List[int] = []
+    resource_ids: List[int] = []
+    role_ids: List[int] = []
 
     class Config:
         from_attributes = True
