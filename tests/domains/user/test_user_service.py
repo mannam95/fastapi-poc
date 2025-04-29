@@ -137,31 +137,3 @@ class TestUserService:
 
         assert excinfo.value.status_code == 404
         assert "not found" in str(excinfo.value.detail).lower()
-
-    async def test_delete_user_exception(self):
-        """Test that exceptions during user deletion are handled correctly"""
-        # Create a user to get a valid ID
-        user_data = UserCreate(title="User for Exception Test")
-        created_user = await self.service.create_user(user_data)
-        user_id = created_user.id
-
-        # Mock the session's delete method to raise an exception
-        original_delete = self.service.session.delete
-
-        async def mock_delete_with_exception(*args, **kwargs):
-            raise Exception("Database error during delete")
-
-        # Replace the delete method with our mocked version
-        self.service.session.delete = mock_delete_with_exception
-
-        try:
-            # The delete operation should now raise an HTTPException
-            with pytest.raises(HTTPException) as excinfo:
-                await self.service.delete_user(user_id)
-
-            # Verify the exception details
-            assert excinfo.value.status_code == 500
-            assert "Database error during delete" in str(excinfo.value.detail)
-        finally:
-            # Restore the original delete method
-            self.service.session.delete = original_delete

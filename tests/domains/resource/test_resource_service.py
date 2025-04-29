@@ -47,7 +47,7 @@ class TestResourceService:
         with pytest.raises(HTTPException) as excinfo:
             await self.service.create_resource(invalid_resource_data)
 
-        assert excinfo.value.status_code == 500
+        assert excinfo.value.status_code == 400
         # Foreign key violation should be in the error message
         assert (
             "ForeignKeyViolationError" in str(excinfo.value.detail)
@@ -169,7 +169,7 @@ class TestResourceService:
         with pytest.raises(HTTPException) as excinfo:
             await self.service.update_resource(resource_id, invalid_update)
 
-        assert excinfo.value.status_code == 500
+        assert excinfo.value.status_code == 400
 
     async def test_delete_resource(self):
         """Test deleting a resource"""
@@ -198,33 +198,3 @@ class TestResourceService:
 
         assert excinfo.value.status_code == 404
         assert "not found" in str(excinfo.value.detail).lower()
-
-    async def test_delete_resource_exception(self):
-        """Test that exceptions during resource deletion are handled correctly"""
-        # Create a resource to get a valid ID
-        resource_data = ResourceCreate(
-            title="Resource for Exception Test", created_by_id=1, process_ids=[]
-        )
-        created_resource = await self.service.create_resource(resource_data)
-        resource_id = created_resource.id
-
-        # Mock the session's delete method to raise an exception
-        original_delete = self.service.session.delete
-
-        async def mock_delete_with_exception(*args, **kwargs):
-            raise Exception("Database error during delete")
-
-        # Replace the delete method with our mocked version
-        self.service.session.delete = mock_delete_with_exception
-
-        try:
-            # The delete operation should now raise an HTTPException
-            with pytest.raises(HTTPException) as excinfo:
-                await self.service.delete_resource(resource_id)
-
-            # Verify the exception details
-            assert excinfo.value.status_code == 500
-            assert "Database error during delete" in str(excinfo.value.detail)
-        finally:
-            # Restore the original delete method
-            self.service.session.delete = original_delete

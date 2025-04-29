@@ -70,7 +70,10 @@ class BaseService(ExceptionHandlingServiceBase):
         return entities
 
     async def update_many_to_many_relationship(
-        self, relationship_collection: List[Any], entity_class: Type[Any], related_ids: List[int]
+        self,
+        relationship_collection: List[Any],
+        model_class: Type[ModelType],
+        related_ids: List[int],
     ) -> None:
         """
         Update a many-to-many relationship collection.
@@ -80,7 +83,7 @@ class BaseService(ExceptionHandlingServiceBase):
 
         Args:
             relationship_collection: The collection to update (e.g., department.processes)
-            entity_class: The class of the related entity (e.g., Process)
+            model_class: The class of the related entity (e.g., Process)
             related_ids: List of IDs to set as the new relationship values
 
         Raises:
@@ -101,16 +104,6 @@ class BaseService(ExceptionHandlingServiceBase):
 
         # Add new items
         if ids_to_add:
-            # Fetch all new items at once
-            result = await self.session.execute(
-                select(entity_class).where(entity_class.id.in_(ids_to_add))
-            )
-            items_to_add = result.scalars().all()
-
-            # Check if all items were found
-            found_ids = {item.id for item in items_to_add}
-            missing_ids = ids_to_add - found_ids
-            if missing_ids:
-                raise RelationshipException(
-                    f"Some {entity_class.__name__} entities not found: {missing_ids}"
-                )
+            entities_to_add = await self.get_entities_by_ids(model_class, list(ids_to_add))
+            for entity in entities_to_add:
+                relationship_collection.append(entity)
