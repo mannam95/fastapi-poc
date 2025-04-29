@@ -1,5 +1,6 @@
 import functools
 import inspect
+import socket
 from typing import Any, Callable, TypeVar
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -56,6 +57,9 @@ class ServiceMetaclass(type):
             except SQLAlchemyError as e:
                 # Handle all other database errors that occur at the SQLAlchemy level
                 exception_to_raise = DatabaseException(f"SQLAlchemyError database error: {str(e)}")
+            except (socket.gaierror, ConnectionRefusedError) as e:
+                # Handle network-related errors or if db is unreachable
+                exception_to_raise = DatabaseException(f"Database not reachable: {str(e)}")
             except Exception as e:
                 # Handle all other unexpected errors
                 exception_to_raise = UnexpectedException(f"Unexpected error: {str(e)}")
