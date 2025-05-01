@@ -41,7 +41,23 @@ class DatabaseSessionManager:
         host_str = str(host) if not isinstance(host, str) else host
 
         self._engine = create_async_engine(
-            url=host_str, pool_size=10, max_overflow=0, pool_pre_ping=True
+            url=host_str,
+            # This determines how many requests can use a DB connection at the same time
+            # before waiting. But pool_size connections are reused and are not closed
+            # when returned. They are only closed when the engine is disposed.
+            pool_size=50,
+            # If all 50 in the pool_size connections are busy,
+            # Then SQLAlchemy can open up to 50 more (totaling 100)
+            # But these "overflow" connections are not reused and are closed when returned
+            # In total, this means that the pool can have up to pool_size + max_overflow connections
+            max_overflow=50,
+            # This is the maximum time (in seconds) a request will wait for a connection.
+            # If the pool is full (i.e., all connections are in use and max overflow is reached).
+            # If no connection is available within this time, it raises a TimeoutError
+            pool_timeout=30,
+            # Before handing a connection to the app, SQLAlchemy will issue a
+            # lightweight "ping" (SELECT 1) to make sure the connection is alive.
+            pool_pre_ping=True,
         )
         self._sessionmaker = async_sessionmaker(
             autocommit=False, autoflush=False, bind=self._engine
