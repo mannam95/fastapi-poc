@@ -8,23 +8,17 @@ services:
     ports:
       - "8000:8000"
       - "7000:7000"
-    # command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-    command:
-      [
-        "python",
-        "-m",
-        "debugpy",
-        "--listen",
-        "0.0.0.0:7000",
-        "-m",
-        "uvicorn",
-        "app.main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-        "--reload",
-      ]
+    # command: >
+    #   python -m debugpy
+    #   --listen 0.0.0.0:7000
+    #   -m uvicorn app.main:app
+    #   --host 0.0.0.0
+    #   --port 8000 --reload
+    command: >
+      gunicorn app.main:app
+      --worker-class uvicorn.workers.UvicornWorker
+      --workers 5
+      --bind 0.0.0.0:8000
     volumes:
       - ../:/app
     depends_on:
@@ -47,12 +41,13 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=process_management
+      - POSTGRES_MAX_CONNECTIONS=2000
     ports:
       - "5432:5432"
     expose:
       - "5432"
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data:cached
+      - ../postgres-data:/var/lib/postgresql/data:cached
     networks:
       - app-network
     healthcheck:
@@ -60,6 +55,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   prometheus:
     image: prom/prometheus
