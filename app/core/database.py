@@ -45,12 +45,12 @@ class DatabaseSessionManager:
             # This determines how many requests can use a DB connection at the same time
             # before waiting. But pool_size connections are reused and are not closed
             # when returned. They are only closed when the engine is disposed.
-            pool_size=50,
+            pool_size=10,
             # If all 50 in the pool_size connections are busy,
             # Then SQLAlchemy can open up to 50 more (totaling 100)
             # But these "overflow" connections are not reused and are closed when returned
             # In total, this means that the pool can have up to pool_size + max_overflow connections
-            max_overflow=50,
+            max_overflow=5,
             # This is the maximum time (in seconds) a request will wait for a connection.
             # If the pool is full (i.e., all connections are in use and max overflow is reached).
             # If no connection is available within this time, it raises a TimeoutError
@@ -181,6 +181,16 @@ async def create_initial_data():
             created_at=datetime.datetime.now(),
             created_by_id=user2.id,
         )
+        department3 = Department(
+            title="department3",
+            created_at=datetime.datetime.now(),
+            created_by_id=user1.id,
+        )
+        department4 = Department(
+            title="department4",
+            created_at=datetime.datetime.now(),
+            created_by_id=user2.id,
+        )
 
         # create two locations
         location1 = Location(
@@ -190,6 +200,16 @@ async def create_initial_data():
         )
         location2 = Location(
             title="location2",
+            created_at=datetime.datetime.now(),
+            created_by_id=user2.id,
+        )
+        location3 = Location(
+            title="location3",
+            created_at=datetime.datetime.now(),
+            created_by_id=user1.id,
+        )
+        location4 = Location(
+            title="location4",
             created_at=datetime.datetime.now(),
             created_by_id=user2.id,
         )
@@ -205,10 +225,22 @@ async def create_initial_data():
             created_at=datetime.datetime.now(),
             created_by_id=user2.id,
         )
+        resource3 = Resource(
+            title="resource3",
+            created_at=datetime.datetime.now(),
+            created_by_id=user1.id,
+        )
+        resource4 = Resource(
+            title="resource4",
+            created_at=datetime.datetime.now(),
+            created_by_id=user2.id,
+        )
 
         # create two roles
         role1 = Role(title="role1", created_at=datetime.datetime.now(), created_by_id=user1.id)
         role2 = Role(title="role2", created_at=datetime.datetime.now(), created_by_id=user2.id)
+        role3 = Role(title="role3", created_at=datetime.datetime.now(), created_by_id=user1.id)
+        role4 = Role(title="role4", created_at=datetime.datetime.now(), created_by_id=user2.id)
 
         # create two processes
         process1 = Process(
@@ -235,12 +267,20 @@ async def create_initial_data():
             [
                 department1,
                 department2,
+                department3,
+                department4,
                 location1,
                 location2,
+                location3,
+                location4,
                 resource1,
                 resource2,
+                resource3,
+                resource4,
                 role1,
                 role2,
+                role3,
+                role4,
                 process1,
                 process2,
             ]

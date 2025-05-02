@@ -5,15 +5,17 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile
+    deploy:
+      resources:
+        limits:
+          cpus: "5" # 5 logical CPUs not physical cores
+          memory: 4G
+        reservations:
+          cpus: "3" # 3 logical CPUs not physical cores
+          memory: 2G
     ports:
       - "8000:8000"
       - "7000:7000"
-    # command: >
-    #   python -m debugpy
-    #   --listen 0.0.0.0:7000
-    #   -m uvicorn app.main:app
-    #   --host 0.0.0.0
-    #   --port 8000 --reload
     command: >
       gunicorn app.main:app
       --worker-class uvicorn.workers.UvicornWorker
@@ -37,6 +39,14 @@ services:
   postgres:
     image: postgres:15
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2" # 2 logical CPUs not physical cores
+          memory: 6G
+        reservations:
+          cpus: "1" # 1 logical CPU not physical core
+          memory: 3G
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -46,8 +56,11 @@ services:
       - "5432:5432"
     expose:
       - "5432"
+    command: >
+      -c config_file=/etc/postgresql.conf
     volumes:
       - ../postgres-data:/var/lib/postgresql/data:cached
+      - ../postgresql.conf:/etc/postgresql.conf
     networks:
       - app-network
     healthcheck:
@@ -57,25 +70,25 @@ services:
       retries: 5
       start_period: 10s
 
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    depends_on:
-      - fast-api-poc
-    networks:
-      - app-network
+  # prometheus:
+  #   image: prom/prometheus
+  #   volumes:
+  #     - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - "9090:9090"
+  #   depends_on:
+  #     - fast-api-poc
+  #   networks:
+  #     - app-network
 
-  grafana:
-    image: grafana/grafana
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
-    networks:
-      - app-network
+  # grafana:
+  #   image: grafana/grafana
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - prometheus
+  #   networks:
+  #     - app-network
 
   locust:
     image: locustio/locust

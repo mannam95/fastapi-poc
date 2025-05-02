@@ -42,3 +42,8 @@ locust==2.36.2
 
 # prometheus
 prometheus-fastapi-instrumentator==7.1.0
+
+# improvments
+uvloop==0.21.0
+httptools==0.6.4
+orjson==3.10.18
