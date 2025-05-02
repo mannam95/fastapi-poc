@@ -94,16 +94,7 @@ class BaseService(ExceptionHandlingServiceBase):
 
         # Determine what needs to be added or removed
         ids_to_add = set(related_ids) - set(current_ids)
-        ids_to_remove = set(current_ids) - set(related_ids)
 
-        # Remove items not in the new list
-        if ids_to_remove:
-            items_to_remove = [item for item in relationship_collection if item.id in ids_to_remove]
-            for item in items_to_remove:
-                relationship_collection.remove(item)
-
-        # Add new items
-        if ids_to_add:
-            entities_to_add = await self.get_entities_by_ids(model_class, list(ids_to_add))
-            for entity in entities_to_add:
-                relationship_collection.append(entity)
+        # Bulk insert new items
+        new_entities = await self.get_entities_by_ids(model_class, list(ids_to_add))
+        relationship_collection[:] = new_entities
