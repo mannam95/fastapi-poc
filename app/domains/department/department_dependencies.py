@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from app.core.async_database import AsyncDBSessionManagerDep
 from app.core.database import DBSessionDep
 from app.core.logging_service import LoggingServiceDep
 from app.domains.department.department_service import DepartmentService
@@ -9,6 +10,7 @@ from app.domains.department.department_service import DepartmentService
 
 def get_department_service(
     session: DBSessionDep,
+    async_db_session_manager: AsyncDBSessionManagerDep,
     logging_service: LoggingServiceDep,
 ) -> DepartmentService:
     """
@@ -26,7 +28,7 @@ def get_department_service(
         DepartmentService: An instance of DepartmentService with the session and
         logging service injected
     """
-    return DepartmentService(session, logging_service)
+    return DepartmentService(session, async_db_session_manager, logging_service)
 
 
 # Type annotation for convenience in route function signatures

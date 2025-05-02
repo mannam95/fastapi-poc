@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.async_database import AsyncDatabaseSessionManager
 from app.core.exceptions import NotFoundException
 from app.core.logging_service import BaseLoggingService
 from app.domains.process.process_model import Process
@@ -18,14 +19,19 @@ from app.domains.shared.base_service import BaseService
 class ResourceService(BaseService):
     """Service for resource-related operations"""
 
-    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
+    def __init__(
+        self,
+        session: AsyncSession,
+        async_db_session_manager: AsyncDatabaseSessionManager,
+        logging_service: BaseLoggingService,
+    ):
         """Initialize the service with a database session
 
         Args:
             session: SQLAlchemy async session for database operations
             logging_service: Service for logging operations
         """
-        super().__init__(session, logging_service)
+        super().__init__(session, async_db_session_manager, logging_service)
 
     async def create_resource(self, resource_data: ResourceCreate) -> Resource:
         """

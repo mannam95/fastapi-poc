@@ -6,6 +6,7 @@ from typing import Any, Callable, TypeVar
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.async_database import AsyncDatabaseSessionManager
 from app.core.exceptions import (
     DatabaseException,
     NotFoundException,
@@ -90,12 +91,19 @@ class ExceptionHandlingServiceBase(metaclass=ServiceMetaclass):
     All service classes should inherit from this class.
     """
 
-    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
+    def __init__(
+        self,
+        session: AsyncSession,
+        async_db_session_manager: AsyncDatabaseSessionManager,
+        logging_service: BaseLoggingService,
+    ):
         """Initialize with database session.
 
         Args:
             session: SQLAlchemy async session for database operations
+            async_session: SQLAlchemy async scoped session for database operations
             logging_service: Logging service for logging exceptions
         """
         self.session = session
+        self.async_db_session_manager = async_db_session_manager
         self.logging_service = logging_service

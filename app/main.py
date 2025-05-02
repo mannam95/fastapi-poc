@@ -2,19 +2,21 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from prometheus_fastapi_instrumentator import Instrumentator
-from starlette.middleware import Middleware
+from fastapi.responses import JSONResponse, ORJSONResponse
 
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import create_db_and_tables, create_initial_data, sessionmanager
 from app.core.exceptions import AppException
-from app.core.logging_middleware import LoggingMiddleware
-from app.core.logging_service import get_logging_service
+
+# from prometheus_fastapi_instrumentator import Instrumentator
+# from starlette.middleware import Middleware
+
+# from app.core.logging_middleware import LoggingMiddleware
+# from app.core.logging_service import get_logging_service
 
 # Add logging middleware
-middleware = [Middleware(LoggingMiddleware, logging_service=get_logging_service())]
+# middleware = [Middleware(LoggingMiddleware, logging_service=get_logging_service())]
 
 
 @asynccontextmanager
@@ -26,6 +28,9 @@ async def lifespan(app: FastAPI):
     # Initialize the database connection
     db_url = settings.SQLALCHEMY_DATABASE_URI
     sessionmanager.init(db_url)
+
+    # limiter = anyio.to_thread.current_default_thread_limiter()  # type: ignore
+    # limiter.total_tokens = 100
 
     # Create database tables
     await create_db_and_tables()
@@ -45,11 +50,12 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     swagger_ui_parameters={"defaultModelsExpandDepth": 0, "docExpansion": None},
     lifespan=lifespan,
-    middleware=middleware,
+    # middleware=middleware,
+    default_response_class=ORJSONResponse,
 )
 
 # Initialize Prometheus Instrumentator
-Instrumentator().instrument(app).expose(app, include_in_schema=False)
+# Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 # Set CORS middleware
 app.add_middleware(
@@ -65,7 +71,7 @@ app.add_middleware(
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):
     """Global handler for custom application exceptions"""
-    await get_logging_service().log_api_exception(exc)
+    # await get_logging_service().log_api_exception(exc)
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},

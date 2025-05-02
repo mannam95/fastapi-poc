@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from app.core.async_database import AsyncDBSessionManagerDep
 from app.core.database import DBSessionDep
 from app.core.logging_service import LoggingServiceDep
 from app.domains.role.role_service import RoleService
@@ -9,6 +10,7 @@ from app.domains.role.role_service import RoleService
 
 def get_role_service(
     session: DBSessionDep,
+    async_db_session_manager: AsyncDBSessionManagerDep,
     logging_service: LoggingServiceDep,
 ) -> RoleService:
     """
@@ -25,7 +27,7 @@ def get_role_service(
     Returns:
         RoleService: An instance of RoleService with dependencies injected
     """
-    return RoleService(session, logging_service)
+    return RoleService(session, async_db_session_manager, logging_service)
 
 
 # Type annotation for convenience in route function signatures

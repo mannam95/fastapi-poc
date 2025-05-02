@@ -8,18 +8,24 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "5" # 5 logical CPUs not physical cores
+          cpus: "10" # 5 logical CPUs not physical cores
           memory: 4G
         reservations:
-          cpus: "3" # 3 logical CPUs not physical cores
+          cpus: "2" # 3 logical CPUs not physical cores
           memory: 2G
     ports:
       - "8000:8000"
       - "7000:7000"
+    # command: >
+    #   python -m debugpy
+    #   --listen 0.0.0.0:7000
+    #   -m uvicorn app.main:app
+    #   --host 0.0.0.0
+    #   --port 8000 --reload
     command: >
       gunicorn app.main:app
       --worker-class uvicorn.workers.UvicornWorker
-      --workers 5
+      --workers 10
       --bind 0.0.0.0:8000
     volumes:
       - ../:/app
@@ -42,10 +48,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2" # 2 logical CPUs not physical cores
+          cpus: "4" # 2 logical CPUs not physical cores
           memory: 6G
         reservations:
-          cpus: "1" # 1 logical CPU not physical core
+          cpus: "2" # 1 logical CPU not physical core
           memory: 3G
     environment:
       - POSTGRES_USER=postgres

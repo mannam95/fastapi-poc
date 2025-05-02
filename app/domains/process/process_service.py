@@ -1,13 +1,15 @@
 # app/domains/process/process_service.py
 # This file contains the business logic for the process domain
 
-from typing import List, Optional
+from asyncio import TaskGroup
+from typing import Any, List, Optional, Protocol, Type, TypeVar
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.exceptions import NotFoundException
+from app.core.async_database import AsyncDatabaseSessionManager
+from app.core.exceptions import NotFoundException, RelationshipException
 from app.core.logging_service import BaseLoggingService
 from app.domains.department.department_model import Department
 from app.domains.location.location_model import Location
@@ -16,19 +18,116 @@ from app.domains.process.process_schemas import ProcessCreate, ProcessUpdate
 from app.domains.resource.resource_model import Resource
 from app.domains.role.role_model import Role
 from app.domains.shared.base_service import BaseService
+from app.domains.user.user_model import User
+
+# ModelType = Type[DeclarativeBase]
+
+
+class HasID(Protocol):
+    id: Any
+
+
+# Type variable for SQLAlchemy models with ID constraint
+ModelType = TypeVar("ModelType", bound=HasID)
 
 
 class ProcessService(BaseService):
     """Service for process-related operations"""
 
-    def __init__(self, session: AsyncSession, logging_service: BaseLoggingService):
+    def __init__(
+        self,
+        session: AsyncSession,
+        async_db_session_manager: AsyncDatabaseSessionManager,
+        logging_service: BaseLoggingService,
+    ):
         """Initialize the service with a database session
 
         Args:
             session: SQLAlchemy async session for database operations
             logging_service: Service for logging operations
         """
-        super().__init__(session, logging_service)
+        super().__init__(session, async_db_session_manager, logging_service)
+
+    async def _get_process_m2m_relationships(
+        self,
+        department_ids: Optional[List[int]] = None,
+        location_ids: Optional[List[int]] = None,
+        resource_ids: Optional[List[int]] = None,
+        role_ids: Optional[List[int]] = None,
+    ) -> tuple[List[Department], List[Location], List[Resource], List[Role]]:
+        """
+        Fetch all many-to-many relationships concurrently using TaskGroup.
+
+        Args:
+            department_ids: List of department IDs
+            location_ids: List of location IDs
+            resource_ids: List of resource IDs
+            role_ids: List of role IDs
+
+        Returns:
+            Tuple of (departments, locations, resources, roles)
+
+        Raises:
+            RelationshipException: If any of the IDs don't exist
+        """
+        async with TaskGroup() as tg:
+            # Create tasks for each relationship type
+            departments_task = tg.create_task(
+                self._get_entities_by_ids(Department, department_ids or [])
+            )
+            locations_task = tg.create_task(self._get_entities_by_ids(Location, location_ids or []))
+            resources_task = tg.create_task(self._get_entities_by_ids(Resource, resource_ids or []))
+            roles_task = tg.create_task(self._get_entities_by_ids(Role, role_ids or []))
+
+        # Return all results
+        return (
+            departments_task.result(),
+            locations_task.result(),
+            resources_task.result(),
+            roles_task.result(),
+        )
+
+    async def _get_entities_by_ids(
+        self, model_class: Type[ModelType], ids: List[int]
+    ) -> List[ModelType]:
+        """
+        Get entities by their IDs.
+
+        Args:
+            model_class: The SQLAlchemy model class
+            ids: List of IDs to fetch
+
+        Returns:
+            List of entities
+
+        Raises:
+            RelationshipException: If any IDs don't exist
+        """
+        if not ids:
+            return []
+
+        db_session = self.async_db_session_manager.get_session()
+        try:
+            result = await db_session.execute(select(model_class).where(model_class.id.in_(ids)))
+            entities = list(result.scalars().all())
+
+            # Validate all IDs exist
+            found_ids = {entity.id for entity in entities}
+            missing_ids = set(ids) - found_ids
+            if missing_ids:
+                entity_name = model_class.__name__
+                raise RelationshipException(f"Some {entity_name} IDs not found: {missing_ids}")
+
+            # Detach all entities from the session
+            for entity in entities:
+                db_session.expunge(entity)
+
+            return entities
+        except Exception as ex:
+            print(f"Exception in _get_entities_by_ids: {ex}")
+            raise ex
+        finally:
+            await db_session.close()
 
     async def create_process(self, process_data: ProcessCreate) -> Process:
         """
@@ -48,30 +147,47 @@ class ProcessService(BaseService):
             DatabaseException: If there's a database error
             RelationshipException: If related entities don't exist
         """
-        # Create new Process instance from input data
-        db_process = Process(
-            title=process_data.title,
-            description=process_data.description,
-            created_by_id=process_data.created_by_id,
-        )
-
-        # Add the process to the database to get an ID
-        self.session.add(db_process)
-
-        # Handle relationships
-        await self._update_relationships(
-            db_process,
+        # Fetch all relationships concurrently
+        departments, locations, resources, roles = await self._get_process_m2m_relationships(
             department_ids=process_data.department_ids,
             location_ids=process_data.location_ids,
             resource_ids=process_data.resource_ids,
             role_ids=process_data.role_ids,
         )
 
-        # Finally commit all
-        await self.session.commit()
+        created_by_user = await self.session.get(User, 1)
 
-        # refresh the process to get the latest data
-        await self.session.refresh(db_process)
+        # Create new Process instance with relationships
+        db_process = Process(
+            title=process_data.title,
+            description=process_data.description,
+            created_by_id=1,
+            created_by=created_by_user,
+            # departments=[await self.session.merge(dept) for dept in departments],
+            # locations=[await self.session.merge(loc) for loc in locations],
+            # resources=[await self.session.merge(res) for res in resources],
+            # roles=[await self.session.merge(role) for role in roles],
+        )
+
+        try:
+            # Add the process to the database
+            self.session.add(db_process)
+
+            # add the departments, locations, resources, and roles to the process
+            db_process.departments = [await self.session.merge(dept) for dept in departments]
+            db_process.locations = [await self.session.merge(loc) for loc in locations]
+            db_process.resources = [await self.session.merge(res) for res in resources]
+            db_process.roles = [await self.session.merge(role) for role in roles]
+
+            # Commit the process to the database
+            await self.session.commit()
+
+            # refresh the process to get the latest data
+            await self.session.refresh(db_process)
+        except Exception as ex:
+            print(f"Process created_by: {db_process.created_by_id}")
+            print(f"Exception in create_process: {ex}")
+            raise ex
 
         # Log the creation event
         await self.logging_service.log_business_event(
@@ -88,7 +204,6 @@ class ProcessService(BaseService):
             },
         )
 
-        # return the process
         return db_process
 
     async def get_processes(self, offset: int = 0, limit: int = 100) -> List[Process]:
@@ -314,13 +429,94 @@ class ProcessService(BaseService):
         Raises:
             RelationshipException: If there's an issue with the relationship operations
         """
-        if department_ids is not None:
-            await self.update_many_to_many_relationship(
-                process.departments, Department, department_ids
-            )
-        if location_ids is not None:
-            await self.update_many_to_many_relationship(process.locations, Location, location_ids)
-        if resource_ids is not None:
-            await self.update_many_to_many_relationship(process.resources, Resource, resource_ids)
-        if role_ids is not None:
-            await self.update_many_to_many_relationship(process.roles, Role, role_ids)
+        try:
+            async with TaskGroup() as task_group:
+                if department_ids is not None:
+                    task_group.create_task(
+                        self._update_relationship_with_new_session(
+                            process.departments, Department, department_ids
+                        )
+                    )
+                if location_ids is not None:
+                    task_group.create_task(
+                        self._update_relationship_with_new_session(
+                            process.locations, Location, location_ids
+                        )
+                    )
+                if resource_ids is not None:
+                    task_group.create_task(
+                        self._update_relationship_with_new_session(
+                            process.resources, Resource, resource_ids
+                        )
+                    )
+                if role_ids is not None:
+                    task_group.create_task(
+                        self._update_relationship_with_new_session(process.roles, Role, role_ids)
+                    )
+        except Exception as ex:
+            # Extract the first exception from the group
+            print(f"Exception in _update_relationships: {ex}")
+            if isinstance(ex, RelationshipException):
+                raise ex
+            raise RelationshipException(f"Failed to update relationships: {str(ex)}") from ex
+
+    async def _update_relationship_with_new_session(
+        self,
+        relationship_collection: List[Any],
+        model_class: Type[ModelType],
+        related_ids: List[int],
+    ) -> None:
+        """
+        Update a relationship using a new scoped session.
+
+        Args:
+            relationship_collection: The collection to update
+            model_class: The class of the related entity
+            related_ids: List of IDs to set as the new relationship values
+        """
+        # Get a new scoped session for this task
+        new_session = self.async_db_session_manager.get_session()
+        try:
+            # Get current IDs for comparison
+            current_ids = [item.id for item in relationship_collection]
+
+            # Determine what needs to be added or removed
+            ids_to_add = set(related_ids) - set(current_ids)
+            ids_to_remove = set(current_ids) - set(related_ids)
+
+            # Remove items not in the new list
+            if ids_to_remove:
+                items_to_remove = [
+                    item for item in relationship_collection if item.id in ids_to_remove
+                ]
+                for item in items_to_remove:
+                    relationship_collection.remove(item)
+
+            # Add new items
+            if ids_to_add:
+                # Get entities using the new session
+                result = await new_session.execute(
+                    select(model_class).where(model_class.id.in_(list(ids_to_add)))
+                )
+                entities_to_add = list(result.scalars().all())
+
+                # Validate all IDs exist
+                found_ids = {entity.id for entity in entities_to_add}
+                missing_ids = set(ids_to_add) - found_ids
+                if missing_ids:
+                    entity_name = model_class.__name__
+                    raise RelationshipException(f"Some {entity_name} IDs not found: {missing_ids}")
+
+                # Use merge to handle objects across sessions
+                for entity in entities_to_add:
+                    # Detach from current session
+                    new_session.expunge(entity)
+                    # Merge into the parent object's session
+                    merged_entity = await self.session.merge(entity)
+                    relationship_collection.append(merged_entity)
+        except Exception as ex:
+            print(f"Exception in _update_relationship_with_new_session: {ex}")
+            raise ex
+        finally:
+            # Ensure the session is closed
+            await new_session.close()

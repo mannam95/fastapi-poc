@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from app.core.async_database import AsyncDBSessionManagerDep
 from app.core.database import DBSessionDep
 from app.core.logging_service import LoggingServiceDep
 from app.domains.user.user_service import UserService
@@ -9,6 +10,7 @@ from app.domains.user.user_service import UserService
 
 def get_user_service(
     session: DBSessionDep,
+    async_db_session_manager: AsyncDBSessionManagerDep,
     logging_service: LoggingServiceDep,
 ) -> UserService:
     """
@@ -26,7 +28,7 @@ def get_user_service(
         UserService: An instance of UserService with the session and
         logging service injected
     """
-    return UserService(session, logging_service)
+    return UserService(session, async_db_session_manager.get_session(), logging_service)
 
 
 # Type annotation for convenience in route function signatures
