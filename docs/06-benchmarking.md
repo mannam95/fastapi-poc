@@ -1,0 +1,105 @@
+# Benchmarking
+
+## Locust
+
+Locust is a powerful tool for benchmarking FastAPI applications.
+
+# Benchmarking Report
+
+## Test Configuration
+
+### Load Test Parameters
+
+- **Ramp-up Strategy**: 100 users at 10 users/second
+- **Test Duration**: 3 minutes
+- **Wait Time**: Between 0-2 seconds between tasks
+- **Host**: http://localhost:8000
+
+### Infrastructure Resources
+
+#### FastAPI Application
+
+- **CPU Limits**: 10 logical CPUs
+- **CPU Reservations**: 3 logical CPUs
+- **Memory Limits**: 4GB (Test peak usage was 1.5GB)
+- **Memory Reservations**: 2GB
+
+#### PostgreSQL Database
+
+- **CPU Limits**: 2 logical CPUs
+- **CPU Reservations**: 1 logical CPU
+- **Memory Limits**: 6GB (Test peak usage was 2.5GB)
+- **Memory Reservations**: 3GB
+
+## Performance Results
+
+### Request Statistics
+
+| Endpoint                 | Requests  | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms)   | RPS(Last 2s) | Failures/s(Last 2s) |
+| ------------------------ | --------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | ---------- | ------------ | ------------------- |
+| GET /api/v1/processes    | 2,636     | 4        | 580         | 1,900       | 2,600       | 731.92       | 9        | 6,712      | 7.8          | 0                   |
+| POST /api/v1/processes   | 634       | 1        | 4,500       | 13,000      | 17,000      | 5,453.62     | 28       | 20,239     | 1.8          | 0                   |
+| GET /api/v1/processes/1  | 1,942     | 1        | 430         | 1,400       | 2,000       | 536.85       | 12       | 3,586      | 6.2          | 0.1                 |
+| PUT /api/v1/processes/\* | 1,253     | 953      | 2,300       | 10,000      | 13,000      | 3,401.96     | 17       | 18,646     | 2.8          | 2.4                 |
+| **Aggregated**           | **6,465** | **959**  | **730**     | **7,700**   | **12,000**  | **1,654.27** | **9**    | **20,239** | **18.6**     | **2.5**             |
+
+## Analysis
+
+### Performance Characteristics
+
+1. **Read Operations (GET)**
+
+   - Fastest operations with median response times under 600ms
+   - GET /api/v1/processes/1 shows best performance (430ms median)
+   - List endpoint (/api/v1/processes) slightly slower due to larger payload
+
+2. **Write Operations (POST/PUT)**
+
+   - Significantly slower due to many-to-many relationships
+   - POST operations show highest latency (4,500ms median)
+   - PUT operations affected by race conditions
+
+3. **Error Analysis**
+   - High failure rate in PUT operations (76% failure rate)
+   - Failures primarily due to concurrent updates on same resources
+   - Read operations show minimal failures
+
+### Bottlenecks and Recommendations
+
+1. **Database Concurrency**
+
+   - Implement optimistic locking for PUT operations
+   - Consider using database-level row locking
+   - Add retry mechanisms for failed updates
+
+2. **Many-to-Many Relationships**
+
+   - Consider denormalizing frequently accessed data
+   - Implement caching for relationship lookups
+   - Optimize SQLAlchemy queries with selectinload or joinedload
+
+3. **Resource Utilization**
+   - Current CPU allocation seems sufficient
+   - Memory usage appears well-balanced
+   - Consider increasing PostgreSQL CPU allocation if write-heavy
+
+### Success Metrics
+
+- Overall RPS: 18.6 requests per second
+- Read operations show good performance
+- System handles concurrent users effectively for read operations
+
+### Areas for Improvement
+
+1. Resolve PUT operation race conditions
+2. Optimize many-to-many relationship handling
+3. Implement better concurrency control
+4. Consider adding caching layer for frequently accessed data
+
+## Conclusion
+
+The system demonstrates good performance for read operations but faces challenges with concurrent write operations. The primary bottleneck appears to be the handling of many-to-many relationships and race conditions in update operations. Implementing proper concurrency control and optimizing relationship handling should significantly improve write operation performance.
+
+**Note-1:** The test was run on a single machine with 10 logical CPUs and 4GB of RAM. The results are not representative of a production environment.
+
+**Note-2:** The test assumed we have continuosly from 100 users at any given time. I am not sure in a production environment we will have such a high number of users at any given time. Maybe sometime but not always.

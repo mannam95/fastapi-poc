@@ -75,32 +75,8 @@ For detailed documentation, please refer to the following files in the `docs` di
 - [Working with Async SQLAlchemy](docs/02-sqlalchemy.md)
 - [Docker Configuration](docs/03-docker.md)
 - [Testing Guide](docs/04-testing.md)
-
-## Development
-
-### Testing
-
-```bash
-# Run all tests
-make test
-
-# Run specific tests
-make test-unit
-make test-integration
-
-# With code coverage
-make test-cov
-```
-
-### Code Quality
-
-```bash
-# Format code
-make format
-
-# Run linters
-make lint
-```
+- [Formatting & Linting](docs/05-formatting.md)
+- [Benchmarking](docs/06-benchmarking.md)
 
 ## License
 

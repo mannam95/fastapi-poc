@@ -4,7 +4,7 @@ from locust import HttpUser, between, task
 
 
 class ProcessUser(HttpUser):
-    wait_time = between(0, 0.1)
+    wait_time = between(0, 2)
     # host = "http://localhost:8000"
 
     def __init__(self, *args, **kwargs):

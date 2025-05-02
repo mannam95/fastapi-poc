@@ -8,12 +8,12 @@ This guide covers the testing approach for the FastAPI project.
 tests/
 ├── conftest.py            # Pytest fixtures and configuration
 ├── domains/               # Tests organized by domain
-│   ├── department/        
-│   ├── location/          
-│   ├── process/           
-│   ├── resource/          
-│   ├── role/              
-│   └── user/              
+│   ├── department/
+│   ├── location/
+│   ├── process/
+│   ├── resource/
+│   ├── role/
+│   └── user/
 ```
 
 ## Running Tests
@@ -23,8 +23,8 @@ tests/
 make test
 
 # Specific test types
-make test-unit
-make test-integration
+make test-unit # TODO: Add unit tests
+make test-integration # Currently only integration tests are implemented
 
 # Coverage report
 make test-cov
