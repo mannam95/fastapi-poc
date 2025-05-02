@@ -6,10 +6,24 @@ A modern API application demonstrating FastAPI with async SQLAlchemy 2.0 and Pos
 
 - FastAPI with async SQLAlchemy 2.0
 - PostgreSQL with asyncpg driver
-- Migration support with Alembic
+- Domain-Driven Design (DDD)
 - Dependency injection pattern
+- Centralized logging with Loguru
+- Centralized Exception handling
 - Docker Compose setup
 - Comprehensive test suite
+- Benchmarking with Locust
+- Code formatting with Black and isort
+- Code linting with Flake8
+- Type checking with Mypy
+
+# TODO items
+
+- Prometheus and Grafana for monitoring
+- Migration support with Alembic
+- Redis for caching
+- WebSockets
+  - support is there just that I couldn't find time to implement it.
 
 ## Requirements
 
@@ -77,6 +91,7 @@ For detailed documentation, please refer to the following files in the `docs` di
 - [Testing Guide](docs/04-testing.md)
 - [Formatting & Linting](docs/05-formatting.md)
 - [Benchmarking](docs/06-benchmarking.md)
+- [Python virtual environment](docs/07-venv.md)
 
 ## License
 
