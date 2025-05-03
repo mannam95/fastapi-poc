@@ -19,15 +19,19 @@ test-build:
 
 test:
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest
+	docker compose -f docker/docker-compose.test.yml down
 
 test-cov:
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest --cov=app --cov-report=term-missing
+	docker compose -f docker/docker-compose.test.yml down
 
 test-unit:
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest -m unit
+	docker compose -f docker/docker-compose.test.yml down
 
 test-integration:
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest -m integration
+	docker compose -f docker/docker-compose.test.yml down
 
 # Database commands
 migrations:
@@ -41,14 +45,16 @@ lint:
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc black app tests
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc isort app tests
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc flake8 app tests
+	docker compose -f docker/docker-compose.test.yml down
 
 format:
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc black app tests
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc isort app tests
+	docker compose -f docker/docker-compose.test.yml down
 
 mypy:
 	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc mypy app
-
+	docker compose -f docker/docker-compose.test.yml down
 
 nuke:
 	docker compose -f docker/docker-compose.yml down
