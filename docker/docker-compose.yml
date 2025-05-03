@@ -16,11 +16,7 @@ services:
     ports:
       - "8000:8000"
       - "7000:7000"
-    command: >
-      gunicorn app.main:app
-      --worker-class uvicorn.workers.UvicornWorker
-      --workers 10
-      --bind 0.0.0.0:8000
+    command: /app/docker/start.sh
     volumes:
       - ../:/app
     depends_on:
@@ -33,6 +29,7 @@ services:
       - POSTGRES_DB=process_management
       - POSTGRES_PORT=5432
       - ENV=development
+      - WORKERS=10
     networks:
       - app-network
 

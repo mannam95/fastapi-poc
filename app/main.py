@@ -8,7 +8,7 @@ from starlette.middleware import Middleware
 
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.database import create_db_and_tables, create_initial_data, sessionmanager
+from app.core.database import sessionmanager
 from app.core.exceptions import AppException
 from app.core.logging_middleware import LoggingMiddleware
 from app.core.logging_service import get_logging_service
@@ -22,14 +22,13 @@ async def lifespan(app: FastAPI):
     """
     Function that handles startup and shutdown events.
     To understand more, read https://fastapi.tiangolo.com/advanced/events/
+
+    Note: Database initialization (creating tables and initial data) should be
+    done separately by running the db_init.py script before starting the app.
     """
     # Initialize the database connection
     db_url = settings.SQLALCHEMY_DATABASE_URI
     sessionmanager.init(db_url)
-
-    # Create database tables
-    await create_db_and_tables()
-    await create_initial_data()
 
     yield
 

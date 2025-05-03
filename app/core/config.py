@@ -52,6 +52,22 @@ class Settings(BaseSettings):
         )
         return str(db_uri)
 
+    @property
+    def SQLALCHEMY_SYNCDATABASE_URI(self) -> str:
+        """
+        Return the database URL as a string for SQLAlchemy.
+        Constructs a connection string from component parts.
+        """
+        db_uri = PostgresDsn.build(
+            scheme="postgresql",  # Using asyncpg driver for async SQLAlchemy
+            username=self.POSTGRES_USER,
+            password=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_SERVER,
+            port=int(self.POSTGRES_PORT),
+            path=f"{self.POSTGRES_DB}",
+        )
+        return str(db_uri)
+
     @field_validator("DATABASE_URI", mode="before")
     def assemble_db_connection(cls, v: Union[str, None], values) -> Union[str, None]:
         """

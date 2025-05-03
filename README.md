@@ -39,7 +39,7 @@ A modern API application demonstrating FastAPI with async SQLAlchemy 2.0 and Pos
 # Clone the repository
 git clone <repository-url>
 
-# Start the application
+# Start the application (includes database initialization)
 make up
 
 # Access API at http://localhost:8000
@@ -78,7 +78,7 @@ tests/
 └── test_models.py      # Model test cases
 
 sql-scripts/
-├── init.sql         # Initial SQL script
+├── init.sql            # Initial SQL script
 ```
 
 ## Documentation
