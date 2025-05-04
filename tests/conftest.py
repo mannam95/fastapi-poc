@@ -1,8 +1,6 @@
 import asyncio
 from typing import AsyncGenerator, Generator
-from urllib.parse import urlparse
 
-import psycopg2
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -44,25 +42,7 @@ async def init_test_db() -> AsyncGenerator[None, None]:
 
     # Create all tables
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-
-    # Parse the connection string to get components for psycopg2
-    parsed_url = urlparse(TEST_DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://"))
-    db_params = {
-        "dbname": parsed_url.path[1:],
-        "user": parsed_url.username,
-        "password": parsed_url.password,
-        "host": parsed_url.hostname,
-        "port": parsed_url.port or 5432,
-    }
-
-    # Use psycopg2 to execute the SQL script directly
-    with psycopg2.connect(**db_params) as conn:
-        conn.autocommit = True
-        with conn.cursor() as cursor:
-            with open("sql-scripts/init.sql", "r") as f:
-                cursor.execute(f.read())
 
     # Initialize session manager with test database
     sessionmanager.init(TEST_DATABASE_URL)
