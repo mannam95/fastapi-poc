@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import Base, get_db_session, sessionmanager
-from app.core.logging_service import get_logging_service
+from app.utils.logging_service import get_logging_service
 from tests.mocks.mock_logging_service import MockLoggingService
 
 TEST_DATABASE_URL = settings.SQLALCHEMY_DATABASE_URI

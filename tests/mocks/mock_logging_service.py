@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from fastapi import Request, Response
 
-from app.core.logging_service import BaseLoggingService
+from app.utils.logging_service import BaseLoggingService
 
 
 class MockLoggingService(BaseLoggingService):

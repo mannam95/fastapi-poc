@@ -6,7 +6,7 @@ echo "Starting the test environment..."
 docker compose -f docker/docker-compose.test.yml up -d
 
 # Determine which commands to run based on the first parameter
-COMMANDS="python -m app.core.db_init"
+COMMANDS="python -m app.utils.db_init"
 
 if [ "$1" = "lint" ]; then
     echo "Running linting commands..."

@@ -7,11 +7,11 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundException
-from app.core.logging_service import BaseLoggingService
 from app.domains.shared.base_service import BaseService
 from app.domains.user.user_model import User
 from app.domains.user.user_schemas import UserCreate, UserUpdate
+from app.utils.exceptions import NotFoundException
+from app.utils.logging_service import BaseLoggingService
 
 
 class UserService(BaseService):

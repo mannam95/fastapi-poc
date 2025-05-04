@@ -3,8 +3,8 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.core.database import DBSessionDep
-from app.core.logging_service import LoggingServiceDep
 from app.domains.location.location_service import LocationService
+from app.utils.logging_service import LoggingServiceDep
 
 
 def get_location_service(

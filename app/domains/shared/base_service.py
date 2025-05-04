@@ -9,8 +9,8 @@ from typing import Any, List, Protocol, Type, TypeVar
 
 from sqlalchemy import select
 
-from app.core.exceptions import RelationshipException
 from app.domains.shared.exception_handling_service import ExceptionHandlingServiceBase
+from app.utils.exceptions import RelationshipException
 
 
 # Define a protocol for models with ID

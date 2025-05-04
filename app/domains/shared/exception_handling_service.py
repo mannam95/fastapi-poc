@@ -6,13 +6,13 @@ from typing import Any, Callable, TypeVar
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import (
+from app.utils.exceptions import (
     DatabaseException,
     NotFoundException,
     RelationshipException,
     UnexpectedException,
 )
-from app.core.logging_service import BaseLoggingService
+from app.utils.logging_service import BaseLoggingService
 
 # Create a type variable for return values
 T = TypeVar("T")

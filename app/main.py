@@ -9,9 +9,9 @@ from starlette.middleware import Middleware
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import sessionmanager
-from app.core.exceptions import AppException
-from app.core.logging_middleware import LoggingMiddleware
-from app.core.logging_service import get_logging_service
+from app.utils.exceptions import AppException
+from app.utils.logging_middleware import LoggingMiddleware
+from app.utils.logging_service import get_logging_service
 
 # Add logging middleware
 middleware = [Middleware(LoggingMiddleware, logging_service=get_logging_service())]

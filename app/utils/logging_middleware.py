@@ -2,7 +2,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.types import ASGIApp
 
-from app.core.logging_service import BaseLoggingService
+from app.utils.logging_service import BaseLoggingService
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):

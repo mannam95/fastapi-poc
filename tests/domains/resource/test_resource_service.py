@@ -2,9 +2,9 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.logging_service import get_logging_service
 from app.domains.resource.resource_dependencies import get_resource_service
 from app.domains.resource.resource_schemas import ResourceCreate, ResourceUpdate
+from app.utils.logging_service import get_logging_service
 
 
 @pytest.mark.asyncio

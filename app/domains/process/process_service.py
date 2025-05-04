@@ -7,11 +7,11 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.exceptions import NotFoundException
-from app.core.logging_service import BaseLoggingService
 from app.domains.process.process_model import Process
 from app.domains.process.process_schemas import ProcessCreate, ProcessUpdate
 from app.domains.shared.base_service import BaseService
+from app.utils.exceptions import NotFoundException
+from app.utils.logging_service import BaseLoggingService
 
 
 class ProcessService(BaseService):

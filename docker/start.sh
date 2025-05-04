@@ -3,7 +3,7 @@ set -e
 
 # Run the database initialization script first
 echo "Initializing database..."
-python -m app.core.db_init
+python -m app.utils.db_init
 
 # Start the application with gunicorn and uvicorn workers
 echo "Starting the application..."
