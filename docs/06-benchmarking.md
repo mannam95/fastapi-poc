@@ -12,7 +12,7 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 
 #### Locust
 
-- **Ramp-up Strategy**: 100 users at 10 users/second
+- **Ramp-up Strategy**: 100 users at 10 users/second (after 10 seconds we essentially have 100 concurrent users)
 - **Test Duration**: 3 minutes
 - **Wait Time**: Between 0.1-2 seconds between tasks
 - **Host**: http://localhost:8000
