@@ -7,9 +7,10 @@ workers trying to initialize the database simultaneously.
 
 import datetime
 import logging
+import pathlib
 import random
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
@@ -104,6 +105,44 @@ def create_initial_data(session):
         raise
 
 
+def execute_sql_scripts(engine):
+    """Execute all SQL scripts from app/sql-scripts directory."""
+    try:
+        # Get the base directory of the application
+        base_dir = pathlib.Path(__file__).parent.parent
+        sql_scripts_dir = base_dir / "sql-scripts"
+
+        # Check if the directory exists
+        if not sql_scripts_dir.exists():
+            print(f"SQL scripts directory not found: {sql_scripts_dir}")
+            return
+
+        # Get all SQL files in the directory, sorted by name
+        sql_files = sorted([f for f in sql_scripts_dir.glob("*.sql")])
+
+        if not sql_files:
+            print("No SQL scripts found in the directory.")
+            return
+
+        # Execute each SQL file
+        with engine.connect() as connection:
+            for sql_file in sql_files:
+                print(f"Executing SQL script: {sql_file.name}")
+                sql_content = sql_file.read_text()
+
+                # Execute the SQL script
+                connection.execute(text(sql_content))
+                connection.commit()
+
+                print(f"Successfully executed SQL script: {sql_file.name}")
+
+        print(f"Successfully executed {len(sql_files)} SQL scripts.")
+
+    except Exception as e:
+        print(f"Error executing SQL scripts: {str(e)}")
+        raise
+
+
 def init_database():
     """Initialize the database with tables and initial data."""
     try:
@@ -116,6 +155,9 @@ def init_database():
 
         # Create tables
         create_db_and_tables(engine)
+
+        # Execute SQL scripts to create functions, procedures, and views
+        execute_sql_scripts(engine)
 
         # Insert initial data and closes the session
         with Session() as session:
