@@ -6,28 +6,46 @@ This document outlines the architecture and key design decisions for the FastAPI
 
 ```
 /
-├── alembic/              # Database migration scripts
 ├── app/
-│   ├── api/              # API router configuration
-│   │   └── api.py        # Main API router
-│   ├── core/             # Core application components
-│   │   ├── config.py     # Application configuration
-│   │   └── database.py   # Database setup and dependencies
-│   ├── domains/          # Business domains (DDD approach)
-│   │   ├── department/   # Department domain
-│   │   ├── location/     # Location domain
-│   │   ├── process/      # Process domain
-│   │   ├── resource/     # Resource domain
-│   │   ├── role/         # Role domain
-│   │   ├── shared/       # Shared domain components
-│   │   └── user/         # User domain
-│   ├── models/           # SQLAlchemy model imports
-│   └── main.py           # Application entry point
-├── migrations/           # Alembic migration configuration
-├── tests/                # Test suite
-│   ├── conftest.py       # Test fixtures
-│   └── domains/          # Tests organized by domain
-└── docker/               # Docker configuration files
+│   ├── api/                            # API router configuration
+│   │   └── api.py                      # Main API router
+│   ├── core/                           # Core application components
+│   │   ├── config.py                   # Application configuration
+│   │   └── database.py                 # Database setup and dependencies
+│   ├── domains/                        # Business domains (DDD approach)
+│   │   ├── department/                 # Department domain
+│   │   ├── location/                   # Location domain
+│   │   ├── process/                    # Process domain
+│   │   ├── resource/                   # Resource domain
+│   │   ├── role/                       # Role domain
+│   │   ├── shared/                     # Shared domain components
+│   │   └── user/                       # User domain
+│   ├── models/                         # SQLAlchemy model imports
+│   ├── utils/                          # Utility functions
+│   │   ├── db_init.py                  # Create initial data and tables
+│   │   ├── exceptions.py               # Custom exceptions
+│   │   ├── logging_middleware.py       # Logging middleware
+│   │   └── logging_service.py          # Logging service
+│   └── main.py                         # Application entry point
+├── tests/                              # Test suite
+│   ├── conftest.py                     # Test fixtures
+│   └── domains/                        # Tests organized by domain
+└── docker/                             # Docker configuration files
+│   ├── docker-compose.yml              # Docker Compose configuration
+│   ├── docker-compose.test.yml         # Docker Compose test configuration
+│   └── Dockerfile                      # Dockerfile for development
+│   └── Dockerfile.prod                 # Dockerfile for production
+└── docs/                               # Documentation files
+│   ├── 01-architecture.md              # Architecture documentation
+│   ├── 02-sqlalchemy.md                # SQLAlchemy documentation
+│   └── 03-docker.md                    # Docker documentation
+└── locust/                             # Locus configuration files
+│   ├── locustfile.py                   # Locus configuration
+│   └── README.md                       # Locus README
+└── prometheus/                         # Prometheus configuration files (TODO: Not implemented)
+│   ├── prometheus.yml                  # Prometheus configuration
+│   └── README.md                       # Prometheus README
+├── alembic/                            # Alembic migration configuration (TODO: Not implemented)
 ```
 
 ## Design Decisions
