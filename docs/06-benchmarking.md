@@ -10,10 +10,20 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 
 ### Load Test Parameters
 
+#### Locust
+
 - **Ramp-up Strategy**: 100 users at 10 users/second
 - **Test Duration**: 3 minutes
-- **Wait Time**: Between 0-2 seconds between tasks
+- **Wait Time**: Between 0.1-2 seconds between tasks
 - **Host**: http://localhost:8000
+
+#### FastAPI Application
+
+- **pool_size**: 5
+- **max_overflow**: 5
+- **pool_timeout**: 30
+- **pool_pre_ping**: True
+- **Note**: A single worker can open max 10 connections to the database. If new requests come in while the pool is full, it will wait for a connection to be returned to the pool. If no connection is available within 30 seconds, it will raise a TimeoutError.
 
 ### Infrastructure Resources
 
@@ -37,13 +47,13 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 
 ### Case1 Statistics
 
-| Endpoint                 | Requests  | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms)   | RPS(Last 2s) | Failures/s(Last 2s) |
-| ------------------------ | --------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | ---------- | ------------ | ------------------- |
-| GET /api/v1/processes    | 2,636     | 4        | 580         | 1,900       | 2,600       | 731.92       | 9        | 6,712      | 7.8          | 0                   |
-| POST /api/v1/processes   | 634       | 1        | 4,500       | 13,000      | 17,000      | 5,453.62     | 28       | 20,239     | 1.8          | 0                   |
-| GET /api/v1/processes/1  | 1,942     | 1        | 430         | 1,400       | 2,000       | 536.85       | 12       | 3,586      | 6.2          | 0.1                 |
-| PUT /api/v1/processes/\* | 1,253     | 953      | 2,300       | 10,000      | 13,000      | 3,401.96     | 17       | 18,646     | 2.8          | 2.4                 |
-| **Aggregated**           | **6,465** | **959**  | **730**     | **7,700**   | **12,000**  | **1,654.27** | **9**    | **20,239** | **18.6**     | **2.5**             |
+| Endpoint                 | Requests | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms)  | RPS(Last 2s) | Failures/s(Last 2s) |
+| ------------------------ | -------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | --------- | ------------ | ------------------- |
+| GET /api/v1/processes    | 966      | 4        | 2300        | 5100        | 7400        | 2469.06      | 43       | 9185      | 3.4          | 0                   |
+| POST /api/v1/processes   | 232      | 1        | 15000       | 31000       | 38000       | 15774.84     | 39       | 40662     | 1.5          | 0                   |
+| GET /api/v1/processes/1  | 789      | 1        | 1900        | 4700        | 6700        | 2117.8       | 61       | 10244     | 2.5          | 0                   |
+| PUT /api/v1/processes/\* | 427      | 89       | 13000       | 30000       | 36000       | 14454.87     | 49       | 43350     | 1.5          | 0.4                 |
+| **Aggregated**           | **2414** | **95**   | **2700**    | **23000**   | **33000**   | **5728.82**  | **39**   | **43350** | **8.9**      | **0.4**             |
 
 ## Analysis
 
