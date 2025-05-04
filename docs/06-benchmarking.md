@@ -81,57 +81,82 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 
 1. **Read Operations (GET)**
 
-   - Fastest operations with median response times under 600ms
-   - GET /api/v1/processes/1 shows best performance (430ms median)
-   - List endpoint (/api/v1/processes) slightly slower due to larger payload
+   - Generally faster operations with median response times ranging from 86ms to 2300ms
+   - GET /api/v1/processes/1 shows consistently good performance across cases
+   - Case 3 shows dramatic improvement with median response time of 86ms (vs 1900ms in Case 1)
 
 2. **Write Operations (POST/PUT)**
 
-   - Significantly slower due to many-to-many relationships
-   - POST operations show highest latency (4,500ms median)
-   - PUT operations affected by race conditions
+   - **ORM vs SQL Functions Impact**: Case 1 (SQLAlchemy ORM) showed extremely high latency (15000ms median for POST, 13000ms for PUT)
+   - Cases 2-3 (PostgreSQL functions) demonstrated dramatic improvement with median times of 160-400ms
+   - Performance improved by approximately 90x for POST operations and 80x for PUT operations when using native SQL functions
 
 3. **Error Analysis**
-   - High failure rate in PUT operations (76% failure rate)
-   - Failures primarily due to concurrent updates on same resources
-   - Read operations show minimal failures
+   - High failure rate in PUT operations in Case 1 (89 failures, 20.8%)
+   - Significant reduction in failures in Cases 2-3 despite handling more requests
+   - Case 3 processed 2918 PUT requests with only 2 failures (0.07%)
+
+### Error Analysis Details
+
+The nature of errors differed significantly between case 1 and cases 2-3:
+
+1. **Case 1 (SQLAlchemy ORM)**
+
+   - Primarily IntegrityError exceptions due to race conditions
+   - Scenario: Multiple users attempting to update the same process simultaneously
+   - Time gap between ORM's check operation and actual update allowed conflicting changes
+   - Higher likelihood of failures with increasing concurrent users
+
+2. **Cases 2-3 (PostgreSQL Functions)**
+   - Minimal errors (0.07% in Case 3 vs 20.8% in Case 1)
+   - Errors primarily related to connection timeouts or remote disconnects
+   - No data integrity violations due to atomic transaction handling at database level
+   - Database functions handled concurrency properly with proper locking mechanisms
+
+This difference demonstrates how direct SQL functions can provide atomic transaction guarantees that are more difficult to achieve through ORM layers, especially at high concurrency levels (100 users/second).
 
 ### Bottlenecks and Recommendations
 
-1. **Database Concurrency**
+1. **ORM Limitations for Complex Operations**
 
-   - Implement optimistic locking for PUT operations
-   - Consider using database-level row locking
-   - Add retry mechanisms for failed updates
+   - Use direct SQL functions for complex write operations with many-to-many relationships
+   - Reserve SQLAlchemy ORM for simpler read operations where its convenience outweighs performance cost
+   - Consider implementing stored procedures for performance-critical operations
 
-2. **Many-to-Many Relationships**
+2. **Architecture Optimization**
 
-   - Consider denormalizing frequently accessed data
-   - Implement caching for relationship lookups
-   - Optimize SQLAlchemy queries with selectinload or joinedload
+   - Leverage PostgreSQL's native capabilities for complex data manipulations
+   - Use a hybrid approach: ORM for CRUD operations, SQL functions for complex queries
+   - Implement connection pooling optimizations to handle higher throughput
 
 3. **Resource Utilization**
-   - Current CPU allocation seems sufficient
-   - Memory usage appears well-balanced
-   - Consider increasing PostgreSQL CPU allocation if write-heavy
+   - Case 3 configuration (10 workers, 10 CPU limit) shows optimal performance
+   - Consider increasing PostgreSQL resources if write operations become more frequent
+   - Current memory allocation seems adequate across all test cases
 
 ### Success Metrics
 
-- Overall RPS: 18.6 requests per second
-- Read operations show good performance
-- System handles concurrent users effectively for read operations
+- Case 3 achieved 81.8 RPS (vs 8.9 RPS in Case 1) - a 9x improvement in throughput
+- Average response time decreased from 5728.82ms to 173.07ms (33x improvement)
+- Failure rate dropped from 3.9% to 0.06%
 
 ### Areas for Improvement
 
-1. Resolve PUT operation race conditions
-2. Optimize many-to-many relationship handling
-3. Implement better concurrency control
-4. Consider adding caching layer for frequently accessed data
+1. Further optimize PostgreSQL functions for specific query patterns
+2. Implement intelligent caching for frequently accessed data
+3. Consider read replicas for scaling read operations if needed
+4. Monitor and tune database indices based on query patterns
 
 ## Conclusion
 
-The system demonstrates good performance for read operations but faces challenges with concurrent write operations. The primary bottleneck appears to be the handling of many-to-many relationships and race conditions in update operations. Implementing proper concurrency control and optimizing relationship handling should significantly improve write operation performance.
+The benchmarking results clearly demonstrate that while SQLAlchemy ORM provides convenience for simple CRUD operations, it becomes a significant bottleneck for complex data manipulations involving many-to-many relationships. The migration to PostgreSQL functions for these complex operations yielded dramatic performance improvements across all metrics:
+
+1. Response times decreased by 30-90x for write operations
+2. System throughput increased by 9x
+3. Error rates dropped from nearly 4% to negligible levels
+
+This hybrid approach - using ORM for simple operations and direct SQL functions for complex ones - provides an optimal balance between developer productivity and system performance. For production deployments, this approach should be adopted as a standard pattern, especially for endpoints handling complex data relationships or high write volumes.
 
 **Note-1:** The test was run on a single machine with 10 logical CPUs and 4GB of RAM. The results are not representative of a production environment.
 
-**Note-2:** The test assumed we have continuosly from 100 users at any given time. I am not sure in a production environment we will have such a high number of users at any given time. Maybe sometime but not always.
+**Note-2:** The test assumed we have continuously from 100 users at any given time. I am not sure in a production environment we will have such a high number of users at any given time. Maybe sometime but not always.
