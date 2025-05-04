@@ -2,7 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, status
 
-from app.domains.shared.exception_response_schemas import ErrorResponse
+from app.domains.shared.schemas.exception_response_schemas import ErrorResponse
 from app.domains.user.user_dependencies import UserServiceDep
 from app.domains.user.user_schemas import UserCreate, UserResponse, UserUpdate
 

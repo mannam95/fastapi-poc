@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.domains.location.location_model import Location
 from app.domains.location.location_schemas import LocationCreate, LocationUpdate
 from app.domains.process.process_model import Process
-from app.domains.shared.base_service import BaseService
+from app.domains.shared.service.base_service import BaseService
 from app.utils.exceptions import NotFoundException
 from app.utils.logging_service import BaseLoggingService
 

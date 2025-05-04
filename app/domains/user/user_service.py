@@ -7,7 +7,7 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.shared.base_service import BaseService
+from app.domains.shared.service.base_service import BaseService
 from app.domains.user.user_model import User
 from app.domains.user.user_schemas import UserCreate, UserUpdate
 from app.utils.exceptions import NotFoundException

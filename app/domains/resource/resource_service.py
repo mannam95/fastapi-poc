@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.domains.process.process_model import Process
 from app.domains.resource.resource_model import Resource
 from app.domains.resource.resource_schemas import ResourceCreate, ResourceUpdate
-from app.domains.shared.base_service import BaseService
+from app.domains.shared.service.base_service import BaseService
 from app.utils.exceptions import NotFoundException
 from app.utils.logging_service import BaseLoggingService
 

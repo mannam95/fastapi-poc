@@ -8,7 +8,7 @@ from app.domains.location.location_schemas import (
     LocationResponse,
     LocationUpdate,
 )
-from app.domains.shared.exception_response_schemas import ErrorResponse
+from app.domains.shared.schemas.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 

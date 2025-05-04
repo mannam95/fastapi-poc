@@ -8,7 +8,7 @@ from app.domains.resource.resource_schemas import (
     ResourceResponse,
     ResourceUpdate,
 )
-from app.domains.shared.exception_response_schemas import ErrorResponse
+from app.domains.shared.schemas.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 

@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.domains.department.department_model import Department
 from app.domains.department.department_schemas import DepartmentCreate, DepartmentUpdate
 from app.domains.process.process_model import Process
-from app.domains.shared.base_service import BaseService
+from app.domains.shared.service.base_service import BaseService
 from app.utils.exceptions import NotFoundException
 from app.utils.logging_service import BaseLoggingService
 

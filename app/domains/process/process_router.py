@@ -8,7 +8,7 @@ from app.domains.process.process_schemas import (
     ProcessResponse,
     ProcessUpdate,
 )
-from app.domains.shared.exception_response_schemas import ErrorResponse
+from app.domains.shared.schemas.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 

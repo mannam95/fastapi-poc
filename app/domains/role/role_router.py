@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query, status
 
 from app.domains.role.role_dependencies import RoleServiceDep
 from app.domains.role.role_schemas import RoleCreate, RoleResponse, RoleUpdate
-from app.domains.shared.exception_response_schemas import ErrorResponse
+from app.domains.shared.schemas.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 

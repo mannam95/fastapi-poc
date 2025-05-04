@@ -8,7 +8,7 @@ from app.domains.department.department_schemas import (
     DepartmentResponse,
     DepartmentUpdate,
 )
-from app.domains.shared.exception_response_schemas import ErrorResponse
+from app.domains.shared.schemas.exception_response_schemas import ErrorResponse
 
 router = APIRouter()
 
