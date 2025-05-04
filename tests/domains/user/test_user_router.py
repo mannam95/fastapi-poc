@@ -105,10 +105,7 @@ class TestUserRouter:
         # Delete the user
         delete_response = await self.client.delete(f"/api/v1/users/{user_id}")
 
-        assert delete_response.status_code == 200
-        delete_data = delete_response.json()
-        assert "message" in delete_data
-        assert delete_data["message"] == "User deleted successfully"
+        assert delete_response.status_code == 204
 
         # Verify it's gone by trying to get it
         get_response = await self.client.get(f"/api/v1/users/{user_id}")

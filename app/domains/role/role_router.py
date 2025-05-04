@@ -127,7 +127,7 @@ async def update_role(
 
 @router.delete(
     "/{role_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         404: {
             "model": ErrorResponse,
@@ -142,11 +142,10 @@ async def delete_role(role_id: int, service: RoleServiceDep):
     Completely removes a role and its relationships.
     This operation cannot be undone.
 
-    Returns a success message.
+    Returns None
 
     Raises:
         NotFoundException: If role not found
         DatabaseException: If there's a database error
     """
-    await service.delete_role(role_id)
-    return {"message": "Role deleted successfully"}
+    return await service.delete_role(role_id)

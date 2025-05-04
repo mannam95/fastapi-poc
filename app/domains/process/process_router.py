@@ -118,7 +118,7 @@ async def update_process(process_id: int, process_in: ProcessUpdate, service: Pr
 
 @router.delete(
     "/{process_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         404: {
             "model": ErrorResponse,
@@ -133,11 +133,10 @@ async def delete_process(process_id: int, service: ProcessServiceDep):
     Completely removes a process and its relationships.
     This operation cannot be undone.
 
-    Returns a success message.
+    Returns None
 
     Raises:
         NotFoundException: If process not found
         DatabaseException: If there's a database error
     """
-    await service.delete_process(process_id)
-    return {"message": "Process deleted successfully"}
+    return await service.delete_process(process_id)

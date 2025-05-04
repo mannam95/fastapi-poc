@@ -119,7 +119,7 @@ async def update_user(
 
 @router.delete(
     "/{user_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         404: {
             "model": ErrorResponse,
@@ -134,11 +134,10 @@ async def delete_user(user_id: int, service: UserServiceDep):
     Completely removes a user from the system.
     This operation cannot be undone.
 
-    Returns a success message.
+    Returns None
 
     Raises:
         NotFoundException: If user not found
         DatabaseException: If there's a database error
     """
-    await service.delete_user(user_id)
-    return {"message": "User deleted successfully"}
+    return await service.delete_user(user_id)

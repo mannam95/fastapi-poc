@@ -122,7 +122,7 @@ async def update_resource(
 
 @router.delete(
     "/{resource_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         404: {
             "model": ErrorResponse,
@@ -137,11 +137,10 @@ async def delete_resource(resource_id: int, service: ResourceServiceDep):
     Completely removes a resource and its relationships.
     This operation cannot be undone.
 
-    Returns a success message.
+    Returns None
 
     Raises:
         NotFoundException: If resource not found
         DatabaseException: If there's a database error
     """
-    await service.delete_resource(resource_id)
-    return {"message": "Resource deleted successfully"}
+    return await service.delete_resource(resource_id)

@@ -127,7 +127,7 @@ async def update_department(
 
 @router.delete(
     "/{department_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         404: {
             "model": ErrorResponse,
@@ -142,11 +142,10 @@ async def delete_department(department_id: int, service: DepartmentServiceDep):
     Completely removes a department and its relationships.
     This operation cannot be undone.
 
-    Returns a success message.
+    Returns None
 
     Raises:
         NotFoundException: If department not found
         DatabaseException: If there's a database error
     """
-    await service.delete_department(department_id)
-    return {"message": "Department deleted successfully"}
+    return await service.delete_department(department_id)

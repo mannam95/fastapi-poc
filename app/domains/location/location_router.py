@@ -127,7 +127,7 @@ async def update_location(
 
 @router.delete(
     "/{location_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         404: {
             "model": ErrorResponse,
@@ -142,11 +142,10 @@ async def delete_location(location_id: int, service: LocationServiceDep):
     Completely removes a location and its relationships.
     This operation cannot be undone.
 
-    Returns a success message.
+    Returns None
 
     Raises:
         NotFoundException: If location not found
         DatabaseException: If there's a database error
     """
-    await service.delete_location(location_id)
-    return {"message": "Location deleted successfully"}
+    return await service.delete_location(location_id)
