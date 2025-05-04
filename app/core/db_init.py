@@ -106,11 +106,11 @@ def create_initial_data(session):
 
 
 def execute_sql_scripts(engine):
-    """Execute all SQL scripts from app/sql-scripts directory."""
+    """Execute all SQL scripts from app/utils/sql-scripts directory."""
     try:
         # Get the base directory of the application
         base_dir = pathlib.Path(__file__).parent.parent
-        sql_scripts_dir = base_dir / "sql-scripts"
+        sql_scripts_dir = base_dir / "utils/sql-scripts"
 
         # Check if the directory exists
         if not sql_scripts_dir.exists():

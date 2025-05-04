@@ -16,8 +16,8 @@ services:
     ports:
       - "8000:8000"
       - "7000:7000"
-    command: /app/docker/start.sh
-    # command: /app/docker/start_dev.sh
+    # command: /app/docker/start.sh
+    command: /app/docker/start_dev.sh
     volumes:
       - ../:/app
     depends_on:
