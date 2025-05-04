@@ -1,20 +1,16 @@
 # app/domains/process/process_service.py
 # This file contains the business logic for the process domain
 
-from typing import List, Optional
+from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException
 from app.core.logging_service import BaseLoggingService
-from app.domains.department.department_model import Department
-from app.domains.location.location_model import Location
 from app.domains.process.process_model import Process
 from app.domains.process.process_schemas import ProcessCreate, ProcessUpdate
-from app.domains.resource.resource_model import Resource
-from app.domains.role.role_model import Role
 from app.domains.shared.base_service import BaseService
 
 
@@ -48,24 +44,36 @@ class ProcessService(BaseService):
             DatabaseException: If there's a database error
             RelationshipException: If related entities don't exist
         """
-        # Create new Process instance from input data
-        db_process = Process(
-            title=process_data.title,
-            description=process_data.description,
-            created_by_id=process_data.created_by_id,
+        params = {
+            "title": process_data.title,
+            "description": process_data.description,
+            "created_by_id": process_data.created_by_id,
+            "m2m_roles": process_data.role_ids,
+            "m2m_departments": process_data.department_ids,
+            "m2m_locations": process_data.location_ids,
+            "m2m_resources": process_data.resource_ids,
+        }
+        result = await self.session.execute(
+            select(Process)
+            .from_statement(
+                text(
+                    """
+            SELECT * FROM create_process_with_m2m(
+                :title,
+                :description,
+                :created_by_id,
+                :m2m_roles,
+                :m2m_departments,
+                :m2m_locations,
+                :m2m_resources)
+            """
+                )
+            )
+            .params(**params)
         )
 
-        # Add the process to the database to get an ID
-        self.session.add(db_process)
-
-        # Handle relationships
-        await self._update_relationships(
-            db_process,
-            department_ids=process_data.department_ids,
-            location_ids=process_data.location_ids,
-            resource_ids=process_data.resource_ids,
-            role_ids=process_data.role_ids,
-        )
+        # Extract the Process object from the result
+        db_process = result.scalar_one()
 
         # Finally commit all
         await self.session.commit()
@@ -205,41 +213,50 @@ class ProcessService(BaseService):
             DatabaseException: If there's a database error
             RelationshipException: If there's an issue with relationship operations
         """
-        # Get the process by ID
-        process = await self.session.get(Process, process_id)
-        if not process:
-            raise NotFoundException(f"Process with ID {process_id} not found")
-
-        # Update process fields
-        update_data = process_data.model_dump(
-            exclude={"department_ids", "location_ids", "resource_ids", "role_ids"},
-            exclude_unset=True,
+        params = {
+            "p_id": process_id,
+            "p_title": process_data.title,
+            "p_description": process_data.description,
+            "m2m_roles": process_data.role_ids,
+            "m2m_departments": process_data.department_ids,
+            "m2m_locations": process_data.location_ids,
+            "m2m_resources": process_data.resource_ids,
+        }
+        result = await self.session.execute(
+            select(Process)
+            .from_statement(
+                text(
+                    """
+            SELECT * FROM update_process_with_m2m(
+                :p_id,
+                :p_title,
+                :p_description,
+                :m2m_roles,
+                :m2m_departments,
+                :m2m_locations,
+                :m2m_resources)
+            """
+                )
+            )
+            .params(**params)
         )
-        for key, value in update_data.items():
-            if value is not None:  # Only update if the value is not None
-                setattr(process, key, value)
 
-        # Handle relationships
-        await self._update_relationships(
-            process,
-            department_ids=process_data.department_ids,
-            location_ids=process_data.location_ids,
-            resource_ids=process_data.resource_ids,
-            role_ids=process_data.role_ids,
-        )
+        # Extract the Process object from the result
+        db_process = result.scalar_one()
 
         # Finally commit all
         await self.session.commit()
 
         # refresh the process to get the latest data
-        await self.session.refresh(process)
+        await self.session.refresh(db_process)
 
         # Log the update event
         await self.logging_service.log_business_event(
             "process_updated",
             {
                 "process_id": process_id,
-                "updated_fields": update_data,
+                "process_title": process_data.title,
+                "process_description": process_data.description,
                 "department_ids": process_data.department_ids,
                 "location_ids": process_data.location_ids,
                 "resource_ids": process_data.resource_ids,
@@ -248,7 +265,7 @@ class ProcessService(BaseService):
         )
 
         # return the process
-        return process
+        return db_process
 
     async def delete_process(self, process_id: int) -> None:
         """
@@ -288,39 +305,3 @@ class ProcessService(BaseService):
                 "process_id": process_id,
             },
         )
-
-    async def _update_relationships(
-        self,
-        process: Process,
-        department_ids: Optional[List[int]] = None,
-        location_ids: Optional[List[int]] = None,
-        resource_ids: Optional[List[int]] = None,
-        role_ids: Optional[List[int]] = None,
-    ) -> None:
-        """
-        Update the many-to-many relationships of a process.
-
-        This method handles adding and removing related entities based on the provided IDs.
-        It uses the base service's update_many_to_many_relationship method to efficiently
-        update each relationship without completely replacing collections.
-
-        Args:
-            process: The process to update
-            department_ids: List of department IDs to associate with the process
-            location_ids: List of location IDs to associate with the process
-            resource_ids: List of resource IDs to associate with the process
-            role_ids: List of role IDs to associate with the process
-
-        Raises:
-            RelationshipException: If there's an issue with the relationship operations
-        """
-        if department_ids is not None:
-            await self.update_many_to_many_relationship(
-                process.departments, Department, department_ids
-            )
-        if location_ids is not None:
-            await self.update_many_to_many_relationship(process.locations, Location, location_ids)
-        if resource_ids is not None:
-            await self.update_many_to_many_relationship(process.resources, Resource, resource_ids)
-        if role_ids is not None:
-            await self.update_many_to_many_relationship(process.roles, Role, role_ids)
