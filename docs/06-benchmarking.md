@@ -19,21 +19,23 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 
 #### FastAPI Application
 
-- **CPU Limits**: 10 logical CPUs
-- **CPU Reservations**: 3 logical CPUs
-- **Memory Limits**: 4GB (Test peak usage was 1.5GB)
-- **Memory Reservations**: 2GB
+| Case | CPU Limits | CPU Reservations | Memory Limits | Memory Reservations |
+| ---- | ---------- | ---------------- | ------------- | ------------------- |
+| 1    | 10         | 3                | 4GB           | 2GB                 |
+| 2    | 5          | 3                | 4GB           | 2GB                 |
+| 3    | 10         | 3                | 4GB           | 2GB                 |
 
 #### PostgreSQL Database
 
-- **CPU Limits**: 2 logical CPUs
-- **CPU Reservations**: 1 logical CPU
-- **Memory Limits**: 6GB (Test peak usage was 2.5GB)
-- **Memory Reservations**: 3GB
+**Note:** In all cases, the db container had only 1 case, more than enough.
+
+| Case | CPU Limits | CPU Reservations | Memory Limits | Memory Reservations |
+| ---- | ---------- | ---------------- | ------------- | ------------------- |
+| 1    | 2          | 1                | 4GB           | 2GB                 |
 
 ## Performance Results
 
-### Request Statistics
+### Case1 Statistics
 
 | Endpoint                 | Requests  | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms)   | RPS(Last 2s) | Failures/s(Last 2s) |
 | ------------------------ | --------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | ---------- | ------------ | ------------------- |

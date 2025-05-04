@@ -5,7 +5,7 @@ from locust import HttpUser, between, task
 
 class ProcessUser(HttpUser):
     # Simulates user "think time" between requests.
-    wait_time = between(1, 4)
+    wait_time = between(0.1, 2)
     # host = "http://localhost:8000"
 
     @task(1)

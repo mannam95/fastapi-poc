@@ -8,15 +8,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "10" # 5 logical CPUs not physical cores
+          cpus: "10" # logical CPUs not physical cores
           memory: 4G
         reservations:
-          cpus: "3" # 3 logical CPUs not physical cores
+          cpus: "3" # logical CPUs not physical cores
           memory: 2G
     ports:
       - "8000:8000"
       - "7000:7000"
     command: /app/docker/start.sh
+    # command: /app/docker/start_dev.sh
     volumes:
       - ../:/app
     depends_on:
@@ -39,11 +40,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2" # 2 logical CPUs not physical cores
-          memory: 6G
+          cpus: "2" # logical CPUs not physical cores
+          memory: 4G
         reservations:
-          cpus: "1" # 1 logical CPU not physical core
-          memory: 3G
+          cpus: "1" # logical CPU not physical core
+          memory: 2G
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

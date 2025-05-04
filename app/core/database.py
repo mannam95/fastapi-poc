@@ -44,7 +44,7 @@ class DatabaseSessionManager:
             # This determines how many requests can use a DB connection at the same time
             # before waiting. But pool_size connections are reused and are not closed
             # when returned. They are only closed when the engine is disposed.
-            pool_size=10,
+            pool_size=5,
             # If all 50 in the pool_size connections are busy,
             # Then SQLAlchemy can open up to 50 more (totaling 100)
             # But these "overflow" connections are not reused and are closed when returned
