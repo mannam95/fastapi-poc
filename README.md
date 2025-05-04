@@ -63,7 +63,8 @@ make nuke
 
 For detailed documentation, please refer to the following files in the `docs` directory:
 
-- [Architecture & Design Decisions](docs/01-architecture.md)
+- [Architecture & Design Decisions](docs/00-architecture.md)
+- [Programming Practices](docs/01-code_style.md)
 - [Working with Async SQLAlchemy](docs/02-sqlalchemy.md)
 - [Docker Configuration](docs/03-docker.md)
 - [Testing Guide](docs/04-testing.md)

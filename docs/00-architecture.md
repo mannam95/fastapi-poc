@@ -36,7 +36,8 @@ This document outlines the architecture and key design decisions for the FastAPI
 │   └── Dockerfile                      # Dockerfile for development
 │   └── Dockerfile.prod                 # Dockerfile for production
 └── docs/                               # Documentation files
-│   ├── 01-architecture.md              # Architecture documentation
+│   ├── 00-architecture.md              # Architecture documentation
+│   ├── 01-code_style.md                # Code style documentation
 │   ├── 02-sqlalchemy.md                # SQLAlchemy documentation
 │   └── 03-docker.md                    # Docker documentation
 └── locust/                             # Locus configuration files
