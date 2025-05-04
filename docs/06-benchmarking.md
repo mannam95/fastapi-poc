@@ -29,11 +29,11 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 
 #### FastAPI Application
 
-| Case | CPU Limits | CPU Reservations | Memory Limits | Memory Reservations |
-| ---- | ---------- | ---------------- | ------------- | ------------------- |
-| 1    | 10         | 3                | 4GB           | 2GB                 |
-| 2    | 5          | 3                | 4GB           | 2GB                 |
-| 3    | 10         | 3                | 4GB           | 2GB                 |
+| Case | CPU Limits | CPU Reservations | Memory Limits | Memory Reservations | Workers |
+| ---- | ---------- | ---------------- | ------------- | ------------------- | ------- |
+| 1    | 10         | 3                | 4GB           | 2GB                 | 10      |
+| 2    | 5          | 3                | 4GB           | 2GB                 | 5       |
+| 3    | 10         | 3                | 4GB           | 2GB                 | 10      |
 
 #### PostgreSQL Database
 
@@ -54,6 +54,26 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 | GET /api/v1/processes/1  | 789      | 1        | 1900        | 4700        | 6700        | 2117.8       | 61       | 10244     | 2.5          | 0                   |
 | PUT /api/v1/processes/\* | 427      | 89       | 13000       | 30000       | 36000       | 14454.87     | 49       | 43350     | 1.5          | 0.4                 |
 | **Aggregated**           | **2414** | **95**   | **2700**    | **23000**   | **33000**   | **5728.82**  | **39**   | **43350** | **8.9**      | **0.4**             |
+
+### Case2 Statistics
+
+| Endpoint                 | Requests  | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms) | RPS(Last 2s) | Failures/s(Last 2s) |
+| ------------------------ | --------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | -------- | ------------ | ------------------- |
+| GET /api/v1/processes    | 5048      | 5        | 270         | 680         | 830         | 308.13       | 2        | 1447     | 29.3         | 0                   |
+| POST /api/v1/processes   | 1295      | 3        | 400         | 1100        | 1500        | 468.75       | 1        | 2051     | 6.7          | 0                   |
+| GET /api/v1/processes/1  | 3773      | 2        | 200         | 610         | 780         | 250.44       | 1        | 1497     | 23.2         | 0                   |
+| PUT /api/v1/processes/\* | 2602      | 0        | 380         | 1100        | 1400        | 456.38       | 58       | 2350     | 15.2         | 0                   |
+| **Aggregated**           | **12718** | **10**   | **280**     | **820**     | **1200**    | **337.86**   | **1**    | **2350** | **74.4**     | **0**               |
+
+### Case3 Statistics
+
+| Endpoint                 | Requests  | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms) | RPS(Last 2s) | Failures/s(Last 2s) |
+| ------------------------ | --------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | -------- | ------------ | ------------------- |
+| GET /api/v1/processes    | 5798      | 0        | 150         | 410         | 600         | 177.25       | 52       | 999      | 32.5         | 0                   |
+| POST /api/v1/processes   | 1422      | 1        | 160         | 600         | 830         | 222.84       | 1        | 1182     | 8.5          | 0                   |
+| GET /api/v1/processes/1  | 4358      | 6        | 86          | 320         | 500         | 120.93       | 2        | 914      | 24.6         | 0                   |
+| PUT /api/v1/processes/\* | 2918      | 2        | 160         | 580         | 830         | 217.75       | 1        | 1181     | 16.2         | 0                   |
+| **Aggregated**           | **14496** | **9**    | **130**     | **440**     | **690**     | **173.07**   | **1**    | **1182** | **81.8**     | **0**               |
 
 ## Analysis
 
