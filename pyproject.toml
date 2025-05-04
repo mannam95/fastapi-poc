@@ -7,3 +7,11 @@ profile = "black"
 [tool.mypy]
 namespace_packages = true
 explicit_package_bases = true
+
+[tool.coverage.run]
+omit = [
+    "**/logging_service.py",
+    "**/logging_middleware.py",
+    "**/db_init.py",
+    "**/models/__init__.py"
+]
