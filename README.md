@@ -33,6 +33,11 @@ A modern API application demonstrating FastAPI with async SQLAlchemy 2.0 and Pos
 
 ## Quick Start
 
+### Makefile
+
+- A simple Makefile is provided and multiple commands are available.
+- You can check the Makefile for more details or `make help` to see the available commands.
+
 ### With Docker (Recommended)
 
 ```bash
@@ -46,39 +51,12 @@ make up
 # API documentation at http://localhost:8000/docs
 ```
 
-## Project Structure
+### Any Issues?
 
-```
-app/
-├── api/                # API router configuration
-├── core/               # Core modules (config, database)
-├── domains/            # Business domains
-│   ├── department/     # Department domain
-│   ├── location/       # Location domain
-│   ├── process/        # Process domain
-│   ├── resource/       # Resource domain
-│   ├── role/           # Role domain
-│   └── user/           # User domain
-└── models/             # SQLAlchemy model imports
+- Any issues faced, just use below command to `nuke` the environment and start again.
 
-docker/
-├── Dockerfile          # Dockerfile for development
-├── Dockerfile.prod     # Dockerfile for production
-└── docker-compose.yml  # Docker Compose configuration
-
-tests/
-├── conftest.py         # Pytest configuration
-├── domains/            # Test domains
-│   ├── department/     # Department test cases
-│   ├── location/       # Location test cases
-│   ├── process/        # Process test cases
-│   ├── resource/       # Resource test cases
-│   ├── role/           # Role test cases
-│   └── user/           # User test cases
-└── test_models.py      # Model test cases
-
-sql-scripts/
-├── init.sql            # Initial SQL script
+```bash
+make nuke
 ```
 
 ## Documentation
