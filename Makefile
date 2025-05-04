@@ -18,43 +18,33 @@ test-build:
 	docker compose -f docker/docker-compose.test.yml build
 
 test:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest
-	docker compose -f docker/docker-compose.test.yml down
+	./docker/start_test.sh test
 
 test-cov:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest --cov=app --cov-report=term-missing
-	docker compose -f docker/docker-compose.test.yml down
+	./docker/start_test.sh test-cov
 
 test-unit:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest -m unit
-	docker compose -f docker/docker-compose.test.yml down
+	./docker/start_test.sh test-unit
 
 test-integration:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc pytest -m integration
-	docker compose -f docker/docker-compose.test.yml down
+	./docker/start_test.sh test-integration
 
 # Database commands
 migrations:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc alembic revision --autogenerate -m "$(m)"
+	echo "TODO: Implement migrations"
 
 migrate:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc alembic upgrade head
+	echo "TODO: Implement migrations"
 
 # Code quality
 lint:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc black app tests
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc isort app tests
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc flake8 app tests
-	docker compose -f docker/docker-compose.test.yml down
+	./docker/start_test.sh lint
 
 format:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc black app tests
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc isort app tests
-	docker compose -f docker/docker-compose.test.yml down
+	./docker/start_test.sh format
 
 mypy:
-	docker compose -f docker/docker-compose.test.yml run --rm test-fast-api-poc mypy app
-	docker compose -f docker/docker-compose.test.yml down
+	./docker/start_test.sh mypy
 
 nuke:
 	docker compose -f docker/docker-compose.yml down

@@ -1,13 +1,14 @@
 services:
   test-fast-api-poc:
     image: test-fast-api-poc
+    container_name: test-fast-api-poc-con
     restart: always
     build:
       context: ../
       dockerfile: docker/Dockerfile
     ports:
       - "8000:8000"
-    command: /app/docker/start_test.sh
+    command: tail -f /dev/null
     volumes:
       - ../:/app
     depends_on:

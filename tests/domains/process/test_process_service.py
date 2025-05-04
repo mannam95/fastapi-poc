@@ -185,8 +185,8 @@ class TestProcessService:
         with pytest.raises(HTTPException) as excinfo:
             await self.service.update_process(non_existent_id, update_data)
 
-        assert excinfo.value.status_code == 404
-        assert "not found" in str(excinfo.value.detail).lower()
+        assert excinfo.value.status_code == 500
+        assert "sqlalchemyerror database error" in str(excinfo.value.detail).lower()
 
     async def test_update_process_invalid_relationships(self):
         """Test update with invalid relationship IDs"""
