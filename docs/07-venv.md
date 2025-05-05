@@ -20,7 +20,7 @@ cd path/to/fastapi-poc
 - create a conda environment
 
 ```bash
-conda create env -f conda-env.yml
+conda env create -f conda-env.yml
 ```
 
 - activate the environment
