@@ -33,6 +33,11 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 - **Cores**: 8 cores (16 thread or 16 logical CPUs)
 - **OS**: Ubuntu 22.04 LTS
 
+#### API request configuration
+
+- **Process Create**, **Process Update**, **Get Process By Id**, **Get All Processes**:
+- All the above end points had complete many to many relationships in the request post body and response.
+
 ### Infrastructure Resources
 
 #### FastAPI Application
