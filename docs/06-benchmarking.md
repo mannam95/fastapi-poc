@@ -25,6 +25,14 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 - **pool_pre_ping**: True
 - **Note**: A single worker can open max 10 connections to the database. If new requests come in while the pool is full, it will wait for a connection to be returned to the pool. If no connection is available within 30 seconds, it will raise a TimeoutError.
 
+#### Laptop Configuration
+
+- **CPU**: Intel(R) Core(TM) i9-11900H CPU @ 4.9GHz 2.50 GHz
+- **RAM**: 32GB (16GB x 2 - 3200 MHz DDR4)
+- **Cache**: 24MB L3 Cache
+- **Cores**: 8 cores (16 thread or 16 logical CPUs)
+- **OS**: Ubuntu 22.04 LTS
+
 ### Infrastructure Resources
 
 #### FastAPI Application
