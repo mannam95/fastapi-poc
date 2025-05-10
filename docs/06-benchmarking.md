@@ -45,8 +45,22 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 | Case | CPU Limits | CPU Reservations | Memory Limits | Memory Reservations | Workers |
 | ---- | ---------- | ---------------- | ------------- | ------------------- | ------- |
 | 1    | 10         | 3                | 4GB           | 2GB                 | 10      |
-| 2    | 5          | 3                | 4GB           | 2GB                 | 5       |
-| 3    | 10         | 3                | 4GB           | 2GB                 | 10      |
+| 2    | 10         | 3                | 4GB           | 2GB                 | 10      |
+| 3    | 5          | 3                | 4GB           | 2GB                 | 5       |
+| 4    | 10         | 3                | 4GB           | 2GB                 | 10      |
+
+- All cases contain GET, POST, PUT requests.
+- Difference between {case1 vs case2, case3, case4} is the api request body.
+- In case1:
+  - Get list of processes do not have any many to many relationships.
+  - Get process by id have many to many relationships in the response.
+  - Create process do not have many to many relationships in the request.
+  - Update process do not have many to many relationships in the request.
+- In case2, case3, case4:
+  - Get list of processes have complex many to many relationships in the response.
+  - Get process by id have complex many to many relationships in the response.
+  - Create process have complex many to many relationships in the request.
+  - Update process have complex many to many relationships in the request.
 
 #### PostgreSQL Database
 
@@ -60,6 +74,16 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 
 ### Case1 Statistics
 
+| Endpoint                 | Requests   | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms) | RPS(Last 2s) | Failures/s(Last 2s) |
+| ------------------------ | ---------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | -------- | ------------ | ------------------- |
+| GET /api/v1/processes    | 6,513      | 1        | 12          | 40          | 58          | 15.55        | 2        | 160      | 33.6         | 0                   |
+| POST /api/v1/processes   | 1,669      | 0        | 28          | 61          | 89          | 31.38        | 17       | 202      | 8.0          | 0                   |
+| GET /api/v1/processes/1  | 4,984      | 2        | 18          | 48          | 70          | 21.84        | 1        | 167      | 31.6         | 0.1                 |
+| PUT /api/v1/processes/\* | 3,270      | 1        | 29          | 85          | 140         | 36.89        | 3        | 279      | 19.3         | 0                   |
+| **Aggregated**           | **16,436** | **4**    | **18**      | **55**      | **85**      | **23.34**    | **1**    | **279**  | **92.5**     | **0.1**             |
+
+### Case2 Statistics
+
 | Endpoint                 | Requests | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms)  | RPS(Last 2s) | Failures/s(Last 2s) |
 | ------------------------ | -------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | --------- | ------------ | ------------------- |
 | GET /api/v1/processes    | 966      | 4        | 2300        | 5100        | 7400        | 2469.06      | 43       | 9185      | 3.4          | 0                   |
@@ -68,7 +92,7 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 | PUT /api/v1/processes/\* | 427      | 89       | 13000       | 30000       | 36000       | 14454.87     | 49       | 43350     | 1.5          | 0.4                 |
 | **Aggregated**           | **2414** | **95**   | **2700**    | **23000**   | **33000**   | **5728.82**  | **39**   | **43350** | **8.9**      | **0.4**             |
 
-### Case2 Statistics
+### Case3 Statistics
 
 | Endpoint                 | Requests  | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms) | RPS(Last 2s) | Failures/s(Last 2s) |
 | ------------------------ | --------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | -------- | ------------ | ------------------- |
@@ -78,7 +102,7 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 | PUT /api/v1/processes/\* | 2602      | 0        | 380         | 1100        | 1400        | 456.38       | 58       | 2350     | 15.2         | 0                   |
 | **Aggregated**           | **12718** | **10**   | **280**     | **820**     | **1200**    | **337.86**   | **1**    | **2350** | **74.4**     | **0**               |
 
-### Case3 Statistics
+### Case4 Statistics
 
 | Endpoint                 | Requests  | Failures | Median (ms) | 95%ile (ms) | 99%ile (ms) | Average (ms) | Min (ms) | Max (ms) | RPS(Last 2s) | Failures/s(Last 2s) |
 | ------------------------ | --------- | -------- | ----------- | ----------- | ----------- | ------------ | -------- | -------- | ------------ | ------------------- |
