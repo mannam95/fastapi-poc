@@ -181,3 +181,6 @@ postgres-data/
 test-postgres-data/
 **/*postgres-data/
 **/*test-postgres-data/
+
+# Ignore all files in the visualizations directory
+**/*visualizations/*
