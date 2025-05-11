@@ -118,47 +118,60 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 
 1. **Read Operations (GET)**
 
-   - Generally faster operations with median response times ranging from 86ms to 2300ms
-   - GET /api/v1/processes/1 shows consistently good performance across cases
-   - Case 3 shows dramatic improvement with median response time of 86ms (vs 1900ms in Case 1)
+   - Case 1 showed excellent performance (12-18ms median) but with simplified data relationships
+   - Case 2 showed significant latency with median response times of 1900-2300ms with complex relationships
+   - Cases 3 and 4 demonstrated dramatic improvements over Case 2:
+     - Case 3: 200-270ms median response times
+     - Case 4: 86-150ms median response times
+   - While Case 1's performance was impressive, it didn't handle the complex many-to-many relationships needed in production
 
 2. **Write Operations (POST/PUT)**
 
-   - **ORM vs SQL Functions Impact**: Case 1 (SQLAlchemy ORM) showed extremely high latency (15000ms median for POST, 13000ms for PUT)
-   - Cases 2-3 (PostgreSQL functions) demonstrated dramatic improvement with median times of 160-400ms
-   - Performance improved by approximately 90x for POST operations and 80x for PUT operations when using native SQL functions
+   - Case 1 showed good performance (28-29ms median) but with simplified data
+   - Case 2 showed extremely high latency (13000-15000ms median) with complex relationships
+   - Cases 3 and 4 demonstrated significant improvements over Case 2:
+     - Case 3: 380-400ms median for write operations
+     - Case 4: 160ms median for write operations
+   - Performance improved by approximately 40x for POST operations and 80x for PUT operations between Case 2 and Case 4
 
 3. **Error Analysis**
-   - High failure rate in PUT operations in Case 1 (89 failures, 20.8%)
-   - Significant reduction in failures in Cases 2-3 despite handling more requests
-   - Case 3 processed 2918 PUT requests with only 2 failures (0.07%)
+   - Case 1 had minimal errors (4 failures total) but with simplified data
+   - Case 2 showed high failure rate (89 failures in PUT operations, 20.8%) with complex data
+   - Cases 3 and 4 showed significant improvement:
+     - Case 4 processed 2918 PUT requests with only 2 failures (0.07%)
 
 ### Error Analysis Details
 
-The nature of errors differed significantly between case 1 and cases 2-3:
+The nature of errors differed significantly between cases:
 
-1. **Case 1 (SQLAlchemy ORM)**
+1. **Case 1**
+
+   - Minimal errors due to simplified data relationships
+   - Not representative of production scenarios with complex many-to-many relationships
+
+2. **Case 2**
 
    - Primarily IntegrityError exceptions due to race conditions
    - Scenario: Multiple users attempting to update the same process simultaneously
-   - Time gap between ORM's check operation and actual update allowed conflicting changes
    - Higher likelihood of failures with increasing concurrent users
+   - First attempt at handling complex relationships
 
-2. **Cases 2-3 (PostgreSQL Functions)**
-   - Minimal errors (0.07% in Case 3 vs 20.8% in Case 1)
+3. **Cases 3 and 4**
+   - Minimal errors (0.07% in Case 4 vs 20.8% in Case 2)
    - Errors primarily related to connection timeouts or remote disconnects
    - No data integrity violations due to atomic transaction handling at database level
    - Database functions handled concurrency properly with proper locking mechanisms
 
-This difference demonstrates how direct SQL functions can provide atomic transaction guarantees that are more difficult to achieve through ORM layers, especially at high concurrency levels (100 users/second).
+This progression demonstrates how the system evolved from a simplified implementation (Case 1) through initial complex data handling (Case 2) to optimized implementations (Cases 3 and 4) that properly handle complex relationships while maintaining good performance.
 
 ### Bottlenecks and Recommendations
 
-1. **ORM Limitations for Complex Operations**
+1. **Performance Optimization**
 
+   - Case 4 configuration shows optimal performance for complex data operations
+   - While Case 1 showed excellent performance, it didn't handle the complex relationships needed in production
    - Use direct SQL functions for complex write operations with many-to-many relationships
-   - Reserve SQLAlchemy ORM for simpler read operations where its convenience outweighs performance cost
-   - Consider implementing stored procedures for performance-critical operations
+   - Implement stored procedures for performance-critical operations
 
 2. **Architecture Optimization**
 
@@ -167,13 +180,14 @@ This difference demonstrates how direct SQL functions can provide atomic transac
    - Implement connection pooling optimizations to handle higher throughput
 
 3. **Resource Utilization**
-   - Case 3 configuration (10 workers, 10 CPU limit) shows optimal performance
+   - Case 4 configuration (10 workers, 10 CPU limit) shows optimal performance
    - Consider increasing PostgreSQL resources if write operations become more frequent
    - Current memory allocation seems adequate across all test cases
 
 ### Success Metrics
 
-- Case 3 achieved 81.8 RPS (vs 8.9 RPS in Case 1) - a 9x improvement in throughput
+- Case 1 achieved 92.5 RPS with simplified data
+- Case 4 achieved 81.8 RPS (vs 8.9 RPS in Case 2) with complex data - a 9x improvement in throughput
 - Average response time decreased from 5728.82ms to 173.07ms (33x improvement)
 - Failure rate dropped from 3.9% to 0.06%
 
@@ -186,13 +200,19 @@ This difference demonstrates how direct SQL functions can provide atomic transac
 
 ## Conclusion
 
-The benchmarking results clearly demonstrate that while SQLAlchemy ORM provides convenience for simple CRUD operations, it becomes a significant bottleneck for complex data manipulations involving many-to-many relationships. The migration to PostgreSQL functions for these complex operations yielded dramatic performance improvements across all metrics:
+The benchmarking results demonstrate an important evolution in the system's implementation:
 
-1. Response times decreased by 30-90x for write operations
+1. Case 1 showed excellent performance but with simplified data relationships, making it unsuitable for production use
+2. Case 2 represented the first attempt at handling complex relationships, showing significant performance challenges
+3. Cases 3 and 4 demonstrated progressive improvements in handling complex data while maintaining good performance
+
+The final implementation in Case 4 yielded dramatic performance improvements across all metrics while properly handling complex data relationships:
+
+1. Response times decreased by 40-80x for write operations compared to Case 2
 2. System throughput increased by 9x
 3. Error rates dropped from nearly 4% to negligible levels
 
-This hybrid approach - using ORM for simple operations and direct SQL functions for complex ones - provides an optimal balance between developer productivity and system performance. For production deployments, this approach should be adopted as a standard pattern, especially for endpoints handling complex data relationships or high write volumes.
+This optimized approach provides an excellent balance between system performance and reliability, especially for endpoints handling complex data relationships or high write volumes. For production deployments, the Case 4 configuration should be adopted as the standard pattern.
 
 **Note-1:** The test was run on a single machine with 10 logical CPUs and 4GB of RAM. The results are not representative of a production environment.
 
