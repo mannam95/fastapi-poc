@@ -20,12 +20,11 @@
   "python.testing.pytestArgs": ["tests"],
 
   // Black Formatter Settings
-  "black-formatter.args": [
-    "--line-length", "100"
-  ],
+  "black-formatter.args": ["--line-length", "100"],
 
   // Mypy Type Checker Settings
   "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy.dmypyExecutable": "~/miniconda3/envs/process-api/bin/dmypy",
   "mypy-type-checker.args": [
     "--disallow-untyped-defs=True",
     "--disallow-untyped-calls=True",
