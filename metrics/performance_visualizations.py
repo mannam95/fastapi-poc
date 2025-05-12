@@ -10,11 +10,11 @@ os.makedirs("visualizations", exist_ok=True)
 
 def create_performance_visualization(case_data, case_name):
     """Create performance visualization for a given case data."""
-    # Create a 2x2 grid of plots
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(20, 16), dpi=300)
+    # Create a 1x2 grid of plots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 9), dpi=300)
     fig.suptitle(f"{case_name} Analysis", fontsize=36, y=0.98)
 
-    # Top Left: Total Requests
+    # Left: Total Requests
     ax1.bar(case_data["endpoint"].tolist(), case_data["requests"], color="skyblue")
     ax1.set_title("Total Requests", fontsize=28, pad=15)
     ax1.set_ylabel("Count", fontsize=24)
@@ -23,7 +23,20 @@ def create_performance_visualization(case_data, case_name):
     for i, v in enumerate(case_data["requests"]):
         ax1.text(i, v, f"{v:,.0f}", ha="center", va="bottom", fontsize=20)
 
-    # Top Right: Response Time Heatmap
+    # Add text box for failures and RPS in the first plot
+    total_failures = case_data["failures"].iloc[-1]
+    total_rps = case_data["RPS"].iloc[-1]
+    
+    # Create text box with different colors
+    props = dict(boxstyle='round', facecolor='white', alpha=0.8)
+    ax1.text(0.05, 0.95, f"Total Failures: {total_failures:,}", 
+             transform=ax1.transAxes, fontsize=20, color='#E24A33',  # Salmon color for failures
+             verticalalignment='top', bbox=props)
+    ax1.text(0.05, 0.85, f"Requests Per Second: {total_rps:.1f}", 
+             transform=ax1.transAxes, fontsize=20, color='#2E8B57',  # Sea green color for RPS
+             verticalalignment='top', bbox=props)
+
+    # Right: Response Time Heatmap
     metrics_for_heatmap = case_data[["median", "average", "95%ile", "99%ile", "min", "max"]]
     sns.heatmap(
         metrics_for_heatmap,
@@ -37,24 +50,6 @@ def create_performance_visualization(case_data, case_name):
     )
     ax2.set_title("Response Time Distribution (ms)", fontsize=28, pad=15)
     ax2.tick_params(axis="both", which="major", labelsize=20)
-
-    # Bottom Left: Total Failures
-    ax3.bar(case_data["endpoint"].tolist(), case_data["failures"], color="salmon")
-    ax3.set_title("Total Failures", fontsize=28, pad=15)
-    ax3.set_ylabel("Count", fontsize=24)
-    ax3.set_xticks(range(len(case_data["endpoint"])))
-    ax3.set_xticklabels(case_data["endpoint"].tolist(), rotation=45, ha="right", fontsize=20)
-    for i, v in enumerate(case_data["failures"]):
-        ax3.text(i, v, f"{v:,.0f}", ha="center", va="bottom", fontsize=20)
-
-    # Bottom Right: RPS
-    ax4.bar(case_data["endpoint"].tolist(), case_data["RPS"], color="lightgreen")
-    ax4.set_title("Requests Per Second", fontsize=28, pad=15)
-    ax4.set_ylabel("RPS", fontsize=24)
-    ax4.set_xticks(range(len(case_data["endpoint"])))
-    ax4.set_xticklabels(case_data["endpoint"].tolist(), rotation=45, ha="right", fontsize=20)
-    for i, v in enumerate(case_data["RPS"]):
-        ax4.text(i, v, f"{v:.1f}", ha="center", va="bottom", fontsize=20)
 
     plt.tight_layout()
     plt.savefig(f"visualizations/{case_name.lower()}_analysis.png", dpi=300, bbox_inches="tight")
