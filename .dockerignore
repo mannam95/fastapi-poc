@@ -1,0 +1,5 @@
+**/metrics/**
+**/docs/**
+**/stats/**
+**/test-postgres-data/**
+**/postgres-data/**
