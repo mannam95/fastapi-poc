@@ -31,7 +31,7 @@ Locust is a powerful tool for benchmarking FastAPI applications.
 - **RAM**: 32GB (16GB x 2 - 3200 MHz DDR4)
 - **Cache**: 24MB L3 Cache
 - **Cores**: 8 cores (16 thread or 16 logical CPUs)
-- **OS**: Ubuntu 22.04 LTS
+- **OS**: Ubuntu 24.04 LTS
 
 #### API request configuration
 

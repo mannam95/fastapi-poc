@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint format migrations migrate build shell clean help test-unit test-integration
+.PHONY: up down logs test lint format migrations migrate build shell clean help test-unit test-integration build-prod
 
 # Docker commands
 up:
@@ -12,6 +12,9 @@ logs:
 
 build:
 	docker compose -f docker/docker-compose.yml build
+
+build-prod:
+	docker build -f docker/Dockerfile.prod -t fast-api-poc-prod .
 
 # Test commands
 test-build:
@@ -76,6 +79,7 @@ help:
 	@echo "  down            Stop the application"
 	@echo "  logs            Show logs"
 	@echo "  build           Build Docker images"
+	@echo "  build-prod      Build production Docker image"
 	@echo "  test            Run tests"
 	@echo "  test-cov        Run tests with coverage"
 	@echo "  test-unit       Run unit tests"
