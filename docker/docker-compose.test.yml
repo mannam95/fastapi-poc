@@ -10,7 +10,15 @@ services:
       - "8000:8000"
     command: tail -f /dev/null
     volumes:
-      - ../:/app
+      - ../app:/app/app
+      - ../tests:/app/tests
+      - ../docker:/app/docker
+      - ../.vscode:/app/.vscode
+      - ../.flake8:/app/.flake8
+      - ../.mypy.ini:/app/.mypy.ini
+      - ../.pyproject.toml:/app/.pyproject.toml
+      - ../pytest.ini:/app/pytest.ini
+      - ../requirements.txt:/app/requirements.txt
     depends_on:
       test-postgres:
         condition: service_healthy
