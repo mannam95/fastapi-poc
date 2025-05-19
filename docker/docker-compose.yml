@@ -16,8 +16,8 @@ services:
     ports:
       - "8000:8000"
       - "7000:7000"
-    # command: /app/docker/start.sh
-    command: /app/docker/start_dev.sh
+    command: /app/docker/start.sh
+    # command: /app/docker/start_dev.sh
     volumes:
       - ../app:/app/app
       - ../tests:/app/tests
@@ -32,10 +32,17 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - POSTGRES_SERVER=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=process_management
+      # - POSTGRES_SERVER=postgres
+      # - POSTGRES_USER=postgres
+      # - POSTGRES_PASSWORD=postgres
+      # - POSTGRES_DB=sri-fastapi-poc
+      # - POSTGRES_PORT=5432
+      # - ENV=development
+      # - WORKERS=10
+      - POSTGRES_SERVER=azure-postgres-server-name.postgres.database.azure.com
+      - POSTGRES_USER=user-name
+      - POSTGRES_PASSWORD=encoded-password
+      - POSTGRES_DB=sri_fastapi_poc
       - POSTGRES_PORT=5432
       - ENV=development
       - WORKERS=10
@@ -56,7 +63,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=process_management
+      - POSTGRES_DB=sri_fastapi_poc
       - POSTGRES_MAX_CONNECTIONS=2000
     ports:
       - "5432:5432"

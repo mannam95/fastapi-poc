@@ -170,9 +170,54 @@ def init_database():
         raise
 
 
+def drop_and_create_db():
+    """Drop and create the database tables."""
+    try:
+        # Suppress SQLAlchemy engine logging
+        logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+
+        # Create connection to PostgreSQL without specifying database
+        db_url = (
+            f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}"
+            f"@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/postgres"
+        )
+        engine = create_engine(db_url, echo=False)
+
+        # Create database if it doesn't exist
+        with engine.connect() as connection:
+            connection.execute(text("COMMIT"))  # Close any open transactions
+
+            # Terminate all connections to the database before dropping it
+            connection.execute(
+                text(
+                    f"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE "
+                    f"datname = '{settings.POSTGRES_DB}' AND pid <> pg_backend_pid()"
+                )
+            )
+
+            # Drop database if it exists
+            connection.execute(text(f"DROP DATABASE IF EXISTS {settings.POSTGRES_DB}"))
+
+            # Create database
+            connection.execute(
+                text(
+                    f"CREATE DATABASE {settings.POSTGRES_DB} "
+                    f"WITH OWNER = {settings.POSTGRES_USER} "
+                    f"ENCODING = 'UTF8' LC_COLLATE = 'en_US.utf8' "
+                    f"LC_CTYPE = 'en_US.utf8' TEMPLATE template0"
+                )
+            )
+            print(f"Database {settings.POSTGRES_DB} created successfully")
+
+    except Exception as e:
+        print(f"Error creating database tables: {str(e)}")
+        raise
+
+
 if __name__ == "__main__":
     """
     Run this script directly to initialize the database:
     python -m app.core.db_init
     """
+    drop_and_create_db()
     init_database()
