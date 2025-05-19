@@ -35,13 +35,13 @@ services:
       # - POSTGRES_SERVER=postgres
       # - POSTGRES_USER=postgres
       # - POSTGRES_PASSWORD=postgres
-      # - POSTGRES_DB=sri-fastapi-poc
+      # - POSTGRES_DB=sri_fastapi_poc
       # - POSTGRES_PORT=5432
       # - ENV=development
       # - WORKERS=10
-      - POSTGRES_SERVER=azure-postgres-server-name.postgres.database.azure.com
-      - POSTGRES_USER=user-name
-      - POSTGRES_PASSWORD=encoded-password
+      - POSTGRES_SERVER=aiioloadtest2.postgres.database.azure.com
+      - POSTGRES_USER=admindme
+      - POSTGRES_PASSWORD=JfK702AE%23
       - POSTGRES_DB=sri_fastapi_poc
       - POSTGRES_PORT=5432
       - ENV=development
