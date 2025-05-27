@@ -17,7 +17,13 @@ build-prod:
 	docker build -f docker/Dockerfile.prod -t fast-api-poc-prod .
 
 build-locust:
-	docker build --no-cache -t locust-poc -f docker/Dockerfile.locust .
+	docker build --no-cache -t sri-locust-poc -f docker/Dockerfile.locust .
+
+push-docker-registry:
+	docker build --no-cache  -t mvsrinath/sri-fast-api-poc:latest -f docker/Dockerfile .
+	docker build --no-cache  -t mvsrinath/sri-locust-poc:latest -f docker/Dockerfile.locust .
+	docker push mvsrinath/sri-fast-api-poc:latest
+	docker push mvsrinath/sri-locust-poc:latest
 
 # Test commands
 test-build:

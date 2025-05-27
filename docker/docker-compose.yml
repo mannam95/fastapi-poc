@@ -1,6 +1,6 @@
 services:
-  fast-api-poc:
-    image: fast-api-poc
+  sri-fast-api-poc:
+    image: sri-fast-api-poc
     restart: always
     build:
       context: ../
@@ -103,8 +103,8 @@ services:
   #   networks:
   #     - app-network
 
-  locust-poc:
-    image: locust-poc
+  sri-locust-poc:
+    image: sri-locust-poc
     build:
       context: ../
       dockerfile: docker/Dockerfile.locust
