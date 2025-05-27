@@ -16,6 +16,9 @@ build:
 build-prod:
 	docker build -f docker/Dockerfile.prod -t fast-api-poc-prod .
 
+build-locust:
+	docker build --no-cache -t locust-poc -f docker/Dockerfile.locust .
+
 # Test commands
 test-build:
 	docker compose -f docker/docker-compose.test.yml build

@@ -8,11 +8,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "10" # logical CPUs not physical cores
-          memory: 4G
+          cpus: "4" # logical CPUs not physical cores
+          memory: 16G
         reservations:
-          cpus: "3" # logical CPUs not physical cores
-          memory: 2G
+          cpus: "4" # logical CPUs not physical cores
+          memory: 16G
     ports:
       - "8000:8000"
       - "7000:7000"
@@ -32,20 +32,20 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      # - POSTGRES_SERVER=postgres
-      # - POSTGRES_USER=postgres
-      # - POSTGRES_PASSWORD=postgres
-      # - POSTGRES_DB=sri_fastapi_poc
-      # - POSTGRES_PORT=5432
-      # - ENV=development
-      # - WORKERS=10
-      - POSTGRES_SERVER=aiioloadtest2.postgres.database.azure.com
-      - POSTGRES_USER=admindme
-      - POSTGRES_PASSWORD=JfK702AE%23
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=sri_fastapi_poc
       - POSTGRES_PORT=5432
       - ENV=development
-      - WORKERS=10
+      - WORKERS=3
+      # - POSTGRES_SERVER=db-name.postgres.database.azure.com
+      # - POSTGRES_USER=admin-name
+      # - POSTGRES_PASSWORD=password
+      # - POSTGRES_DB=sri_fastapi_poc
+      # - POSTGRES_PORT=5432
+      # - ENV=development
+      # - WORKERS=3
     networks:
       - app-network
 
@@ -103,15 +103,14 @@ services:
   #   networks:
   #     - app-network
 
-  locust:
-    image: locustio/locust
+  locust-poc:
+    image: locust-poc
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.locust
     ports:
       - "8089:8089"
-    volumes:
-      - ../locust:/mnt/locust
-    command: >
-      -f /mnt/locust/locustfile.py
-      --host http://fast-api-poc:8000
+    command: -f /mnt/locust/locustfile.py --host http://fast-api-poc:8000
     depends_on:
       - fast-api-poc
     networks:
