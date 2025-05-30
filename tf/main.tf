@@ -274,12 +274,12 @@ resource "azurerm_container_group" "fastapi" {
   image_registry_credential {
     username = var.docker_username
     password = var.docker_pat
-    server   = "index.docker.io"
+    server   = var.docker_registry_server
   }
 
   container {
     name     = "loadtest-poc-fastapi"
-    image    = "mvsrinath/sri-fast-api-poc:latest" # Replace with your actual image
+    image    = var.fastapi_image
     cpu      = var.fastapi_container_cpu
     memory   = var.fastapi_container_memory
     commands = ["/app/docker/start.sh"]
@@ -315,12 +315,12 @@ resource "azurerm_container_group" "locust" {
   image_registry_credential {
     username = var.docker_username
     password = var.docker_pat
-    server   = "index.docker.io"
+    server   = var.docker_registry_server
   }
 
   container {
     name     = "loadtest-poc-locust"
-    image    = "mvsrinath/sri-locust-poc:latest"
+    image    = var.locust_image
     cpu      = var.locust_container_cpu
     memory   = var.locust_container_memory
     commands = ["locust", "-f", "/mnt/locust/locustfile.py", "--host", "http://${azurerm_container_group.fastapi.ip_address}:8000"]

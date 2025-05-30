@@ -113,3 +113,21 @@ variable "docker_pat" {
   type        = string
   sensitive   = true
 }
+
+variable "docker_registry_server" {
+  description = "Docker registry server URL"
+  type        = string
+  default     = "index.docker.io"
+}
+
+variable "fastapi_image" {
+  description = "Docker image for FastAPI application"
+  type        = string
+  default     = "mvsrinath/sri-fast-api-poc:latest"
+}
+
+variable "locust_image" {
+  description = "Docker image for Locust load testing"
+  type        = string
+  default     = "mvsrinath/sri-locust-poc:latest"
+}

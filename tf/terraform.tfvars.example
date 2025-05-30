@@ -31,3 +31,8 @@ tags = {
 # Docker Hub credentials
 docker_username = "your-docker-username"
 docker_pat = "your-docker-pat"  # Replace with your Docker Hub Personal Access Token 
+
+# Docker image configuration
+docker_registry_server = "index.docker.io"
+fastapi_image         = "your-fastapi-image:tag"
+locust_image          = "your-locust-image:tag" 
