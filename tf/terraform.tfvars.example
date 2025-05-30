@@ -1,0 +1,33 @@
+resource_group_name = "loadtest-poc-rg"
+location            = "westeurope"
+environment         = "poc"
+
+vnet_cidr = "10.0.0.0/16"
+subnet_cidrs = {
+  database = "10.0.1.0/24"
+  backend  = "10.0.2.0/24"
+  loadtest = "10.0.3.0/24"
+  agw      = "10.0.4.0/24"
+}
+
+postgres_admin_username = "psqladmin"
+postgres_admin_password = "your-secure-password-here"  # Replace with a secure password
+postgres_sku_name      = "Standard_D4ds_v5"
+postgres_storage_mb    = 32768
+postgres_iops         = 120
+
+fastapi_container_cpu    = 4
+fastapi_container_memory = 16
+
+locust_container_cpu    = 1
+locust_container_memory = 2
+
+tags = {
+  Environment = "POC"
+  Project     = "LoadTesting"
+  ManagedBy   = "Terraform"
+} 
+
+# Docker Hub credentials
+docker_username = "your-docker-username"
+docker_pat = "your-docker-pat"  # Replace with your Docker Hub Personal Access Token 

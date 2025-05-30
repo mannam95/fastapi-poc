@@ -1,0 +1,115 @@
+variable "resource_group_name" {
+  description = "Name of the resource group"
+  type        = string
+  default     = "loadtest-poc-rg"
+}
+
+variable "location" {
+  description = "Azure region for all resources"
+  type        = string
+  default     = "northeurope"
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "poc"
+}
+
+variable "vnet_cidr" {
+  description = "CIDR block for the virtual network"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "subnet_cidrs" {
+  description = "CIDR blocks for subnets"
+  type = object({
+    database = string
+    backend  = string
+    loadtest = string
+    agw      = string
+  })
+  default = {
+    database = "10.0.1.0/24"
+    backend  = "10.0.2.0/24"
+    loadtest = "10.0.3.0/24"
+    agw      = "10.0.4.0/24"
+  }
+}
+
+variable "postgres_admin_username" {
+  description = "PostgreSQL admin username"
+  type        = string
+  default     = "psqladmin"
+}
+
+variable "postgres_admin_password" {
+  description = "PostgreSQL admin password"
+  type        = string
+  sensitive   = true
+}
+
+variable "postgres_sku_name" {
+  description = "PostgreSQL SKU name"
+  type        = string
+  default     = "Standard_D4ds_v5"
+}
+
+variable "postgres_storage_mb" {
+  description = "PostgreSQL storage size in MB"
+  type        = number
+  default     = 32768
+}
+
+variable "postgres_iops" {
+  description = "PostgreSQL IOPS"
+  type        = number
+  default     = 120
+}
+
+variable "fastapi_container_cpu" {
+  description = "FastAPI container CPU cores"
+  type        = number
+  default     = 4
+}
+
+variable "fastapi_container_memory" {
+  description = "FastAPI container memory in GB"
+  type        = number
+  default     = 16
+}
+
+variable "locust_container_cpu" {
+  description = "Locust container CPU cores"
+  type        = number
+  default     = 1
+}
+
+variable "locust_container_memory" {
+  description = "Locust container memory in GB"
+  type        = number
+  default     = 2
+}
+
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default = {
+    Environment = "POC"
+    Project     = "LoadTesting"
+    ManagedBy   = "Terraform"
+  }
+}
+
+variable "docker_username" {
+  description = "Docker Hub username"
+  type        = string
+  sensitive   = true
+}
+
+variable "docker_pat" {
+  description = "Docker Hub Personal Access Token (PAT)"
+  type        = string
+  sensitive   = true
+}
