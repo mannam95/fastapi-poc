@@ -117,3 +117,9 @@ variable "backend_port" {
   type        = number
   default     = 8000
 }
+
+variable "backend_command" {
+  description = "Command to run the backend application"
+  type        = list(string)
+  default     = ["./app"]
+}

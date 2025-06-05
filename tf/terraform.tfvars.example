@@ -32,3 +32,4 @@ docker_pat = "your-docker-pat"  # Replace with your Docker Hub Personal Access T
 docker_registry_server = "docker.io"
 backend_image         = "your-backend-image:tag" 
 backend_port          = 8080
+backend_command       = ["./app"]

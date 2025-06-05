@@ -241,12 +241,11 @@ resource "azurerm_container_group" "backend" {
   }
 
   container {
-    name   = "loadtest-poc-backend"
-    image  = var.backend_image
-    cpu    = var.backend_container_cpu
-    memory = var.backend_container_memory
-    # commands = ["/app/docker/start.sh"]
-    commands = ["./app"]
+    name     = "loadtest-poc-backend"
+    image    = var.backend_image
+    cpu      = var.backend_container_cpu
+    memory   = var.backend_container_memory
+    commands = var.backend_command
 
     ports {
       port     = var.backend_port
