@@ -64,24 +64,6 @@ resource "azurerm_subnet" "backend" {
   }
 }
 
-resource "azurerm_subnet" "loadtest" {
-  name                 = "loadtest-subnet"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.subnet_cidrs.loadtest]
-  service_endpoints    = ["Microsoft.Storage"]
-
-  delegation {
-    name = "aci"
-    service_delegation {
-      name = "Microsoft.ContainerInstance/containerGroups"
-      actions = [
-        "Microsoft.Network/virtualNetworks/subnets/action"
-      ]
-    }
-  }
-}
-
 # Subnet for Application Gateway
 resource "azurerm_subnet" "agw" {
   name                 = "agw-subnet"
@@ -116,47 +98,17 @@ resource "azurerm_network_security_group" "backend" {
   resource_group_name = azurerm_resource_group.rg.name
 
   security_rule {
-    name                       = "allow-http"
+    name                       = "allow-http-backend"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "8000"
-    source_address_prefix      = var.subnet_cidrs.loadtest
-    destination_address_prefix = "*"
-  }
-  tags = var.tags
-}
-
-resource "azurerm_network_security_group" "loadtest" {
-  name                = "loadtest-poc-locust-nsg"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-
-  security_rule {
-    name                       = "allow-locust-web"
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "8089"
+    destination_port_range     = var.backend_port
     source_address_prefix      = var.subnet_cidrs.agw
     destination_address_prefix = "*"
   }
 
-  security_rule {
-    name                       = "allow-locust-web-public"
-    priority                   = 110
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "8089"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
   tags = var.tags
 }
 
@@ -165,15 +117,15 @@ resource "azurerm_network_security_group" "agw" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
-  # Allow inbound traffic on port 8089 (your application)
+  # Allow inbound traffic on backend port
   security_rule {
-    name                       = "allow-http-8089"
+    name                       = "allow-backend-port"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "8089"
+    destination_port_range     = var.backend_port
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -218,11 +170,6 @@ resource "azurerm_subnet_network_security_group_association" "backend" {
   network_security_group_id = azurerm_network_security_group.backend.id
 }
 
-resource "azurerm_subnet_network_security_group_association" "loadtest" {
-  subnet_id                 = azurerm_subnet.loadtest.id
-  network_security_group_id = azurerm_network_security_group.loadtest.id
-}
-
 resource "azurerm_subnet_network_security_group_association" "agw" {
   subnet_id                 = azurerm_subnet.agw.id
   network_security_group_id = azurerm_network_security_group.agw.id
@@ -262,9 +209,25 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   tags = var.tags
 }
 
-# FastAPI Container Instance
-resource "azurerm_container_group" "fastapi" {
-  name                = "loadtest-poc-fastapi"
+# Add firewall rule to allow connections from backend subnet
+resource "azurerm_postgresql_flexible_server_firewall_rule" "backend" {
+  name             = "allow-backend-subnet"
+  server_id        = azurerm_postgresql_flexible_server.postgres.id
+  start_ip_address = cidrhost(var.subnet_cidrs.backend, 0)
+  end_ip_address   = cidrhost(var.subnet_cidrs.backend, -1)
+}
+
+# Create go_rest_api database
+resource "azurerm_postgresql_flexible_server_database" "go_rest_api" {
+  name      = "go_rest_api"
+  server_id = azurerm_postgresql_flexible_server.postgres.id
+  charset   = "UTF8"
+  collation = "en_US.utf8"
+}
+
+# Backend Container Instance
+resource "azurerm_container_group" "backend" {
+  name                = "loadtest-poc-backend"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   ip_address_type     = "Private"
@@ -274,64 +237,44 @@ resource "azurerm_container_group" "fastapi" {
   image_registry_credential {
     username = var.docker_username
     password = var.docker_pat
-    server   = var.docker_registry_server
+    server   = "index.docker.io"
   }
 
   container {
-    name     = "loadtest-poc-fastapi"
-    image    = var.fastapi_image
-    cpu      = var.fastapi_container_cpu
-    memory   = var.fastapi_container_memory
-    commands = ["/app/docker/start.sh"]
+    name   = "loadtest-poc-backend"
+    image  = var.backend_image
+    cpu    = var.backend_container_cpu
+    memory = var.backend_container_memory
+    # commands = ["/app/docker/start.sh"]
+    commands = ["./app"]
 
     ports {
-      port     = 8000
+      port     = var.backend_port
+      protocol = "TCP"
+    }
+
+    ports {
+      port     = 8080
       protocol = "TCP"
     }
 
     environment_variables = {
+      # FASTAPI-POC
       POSTGRES_SERVER   = "${azurerm_postgresql_flexible_server.postgres.name}.postgres.database.azure.com"
       POSTGRES_USER     = var.postgres_admin_username
       POSTGRES_PASSWORD = var.postgres_admin_password
       POSTGRES_DB       = "sri_fastapi_poc"
       POSTGRES_PORT     = 5432
       ENV               = "development"
-      WORKERS           = 3
-    }
-  }
+      WORKERS           = 4
 
-  tags = var.tags
-}
-
-# Locust Container Instance
-resource "azurerm_container_group" "locust" {
-  name                = "loadtest-poc-locust"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  ip_address_type     = "Private"
-  os_type             = "Linux"
-  subnet_ids          = [azurerm_subnet.loadtest.id]
-
-  image_registry_credential {
-    username = var.docker_username
-    password = var.docker_pat
-    server   = var.docker_registry_server
-  }
-
-  container {
-    name     = "loadtest-poc-locust"
-    image    = var.locust_image
-    cpu      = var.locust_container_cpu
-    memory   = var.locust_container_memory
-    commands = ["locust", "-f", "/mnt/locust/locustfile.py", "--host", "http://${azurerm_container_group.fastapi.ip_address}:8000"]
-
-    ports {
-      port     = 8089
-      protocol = "TCP"
-    }
-
-    environment_variables = {
-      LOCUST_HOST = "http://${azurerm_container_group.fastapi.ip_address}:8000"
+      # GO-POC
+      DB_HOST     = "${azurerm_postgresql_flexible_server.postgres.name}.postgres.database.azure.com"
+      DB_PORT     = 5432
+      DB_USER     = var.postgres_admin_username
+      DB_PASSWORD = var.postgres_admin_password
+      DB_NAME     = "go_rest_api"
+      DB_SSLMODE  = "require"
     }
   }
 
@@ -366,8 +309,8 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   frontend_port {
-    name = "locust-port"
-    port = 8089
+    name = "backend-port"
+    port = var.backend_port
   }
 
   frontend_ip_configuration {
@@ -376,26 +319,24 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   backend_address_pool {
-    name = "locust-pool"
-    # ip_addresses = [azurerm_container_group.locust.ip_address]
-    ip_addresses = ["10.0.3.4"]
+    name         = "backend-pool"
+    ip_addresses = [azurerm_container_group.backend.ip_address]
   }
 
   backend_http_settings {
-    name                  = "locust-http-settings"
+    name                  = "backend-http-settings"
     cookie_based_affinity = "Disabled"
-    port                  = 8089
+    port                  = var.backend_port
     protocol              = "Http"
     request_timeout       = 60
-    probe_name            = "locust-probe"
+    probe_name            = "backend-health-probe"
   }
 
   probe {
-    name     = "locust-probe"
-    protocol = "Http"
-    # host                = azurerm_container_group.locust.ip_address
+    name                = "backend-health-probe"
+    protocol            = "Http"
     host                = "localhost"
-    path                = "/"
+    path                = "/health"
     interval            = 30
     timeout             = 30
     unhealthy_threshold = 3
@@ -405,18 +346,18 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   http_listener {
-    name                           = "locust-listener"
+    name                           = "backend-listener"
     frontend_ip_configuration_name = "frontend-ip-config"
-    frontend_port_name             = "locust-port"
+    frontend_port_name             = "backend-port"
     protocol                       = "Http"
   }
 
   request_routing_rule {
-    name                       = "locust-routing-rule"
+    name                       = "backend-routing-rule"
     rule_type                  = "Basic"
-    http_listener_name         = "locust-listener"
-    backend_address_pool_name  = "locust-pool"
-    backend_http_settings_name = "locust-http-settings"
+    http_listener_name         = "backend-listener"
+    backend_address_pool_name  = "backend-pool"
+    backend_http_settings_name = "backend-http-settings"
     priority                   = 1
   }
 

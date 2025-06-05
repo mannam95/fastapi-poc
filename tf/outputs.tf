@@ -19,17 +19,12 @@ output "postgres_connection_string" {
   sensitive   = true
 }
 
-output "fastapi_container_ip" {
-  description = "Private IP address of the FastAPI container"
-  value       = azurerm_container_group.fastapi.ip_address
+output "backend_container_ip" {
+  description = "Private IP address of the backend container"
+  value       = azurerm_container_group.backend.ip_address
 }
 
-output "locust_container_ip" {
-  description = "Private IP address of the Locust container"
-  value       = azurerm_container_group.locust.ip_address
-}
-
-output "locust_web_interface" {
-  description = "URL for the Locust web interface"
-  value       = "http://${azurerm_public_ip.agw.ip_address}:8089"
+output "backend_api_url" {
+  description = "URL for the backend API"
+  value       = "http://${azurerm_public_ip.agw.ip_address}:${var.backend_port}"
 }

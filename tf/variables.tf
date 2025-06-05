@@ -27,13 +27,11 @@ variable "subnet_cidrs" {
   type = object({
     database = string
     backend  = string
-    loadtest = string
     agw      = string
   })
   default = {
     database = "10.0.1.0/24"
     backend  = "10.0.2.0/24"
-    loadtest = "10.0.3.0/24"
     agw      = "10.0.4.0/24"
   }
 }
@@ -68,28 +66,16 @@ variable "postgres_iops" {
   default     = 120
 }
 
-variable "fastapi_container_cpu" {
-  description = "FastAPI container CPU cores"
+variable "backend_container_cpu" {
+  description = "Backend container CPU cores"
   type        = number
   default     = 4
 }
 
-variable "fastapi_container_memory" {
-  description = "FastAPI container memory in GB"
+variable "backend_container_memory" {
+  description = "Backend container memory in GB"
   type        = number
   default     = 16
-}
-
-variable "locust_container_cpu" {
-  description = "Locust container CPU cores"
-  type        = number
-  default     = 1
-}
-
-variable "locust_container_memory" {
-  description = "Locust container memory in GB"
-  type        = number
-  default     = 2
 }
 
 variable "tags" {
@@ -120,14 +106,14 @@ variable "docker_registry_server" {
   default     = "index.docker.io"
 }
 
-variable "fastapi_image" {
-  description = "Docker image for FastAPI application"
+variable "backend_image" {
+  description = "Docker image for backend application"
   type        = string
   default     = "mvsrinath/sri-fast-api-poc:latest"
 }
 
-variable "locust_image" {
-  description = "Docker image for Locust load testing"
-  type        = string
-  default     = "mvsrinath/sri-locust-poc:latest"
+variable "backend_port" {
+  description = "Port on which the backend application runs"
+  type        = number
+  default     = 8000
 }

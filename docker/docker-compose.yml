@@ -113,6 +113,8 @@ services:
     command: -f /mnt/locust/locustfile.py --host http://fast-api-poc:8000
     depends_on:
       - fast-api-poc
+    volumes:
+      - ../locust:/mnt/locust
     networks:
       - app-network
 
