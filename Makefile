@@ -7,6 +7,9 @@ up:
 down:
 	docker compose -f docker/docker-compose.yml down
 
+up-locust:
+	docker compose -f docker/docker-compose.locust.yml up
+
 logs:
 	docker compose -f docker/docker-compose.yml logs -f
 
@@ -61,6 +64,7 @@ mypy:
 nuke:
 	docker compose -f docker/docker-compose.yml down
 	docker compose -f docker/docker-compose.test.yml down
+	docker compose -f docker/docker-compose.locust.yml down
 	docker volume prune -f
 	docker system prune -f
 	sudo rm -rf postgres-data docker/postgres-data

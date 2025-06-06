@@ -1,0 +1,16 @@
+services:
+  sri-locust-poc:
+    image: sri-locust-poc
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.locust
+    ports:
+      - "8089:8089"
+    command: -f /mnt/locust/locustfile.py --host http://fast-api-poc:8000
+    volumes:
+      - ../locust:/mnt/locust
+    networks:
+      - app-network
+
+networks:
+  app-network:
